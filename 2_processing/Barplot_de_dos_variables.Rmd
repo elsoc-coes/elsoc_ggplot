@@ -1,0 +1,193 @@
+---
+title: 'Visualización Graficos Barra'
+author: "Elisa Salas"
+date: "28 de mayo 2021"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+# Este es el chunk de setup, opciones generales de chunks, se recomienda!
+
+#knitr::opts_chunk$set(cache=FALSE, # guarda renderizaciones parciales, ahorra tiempo
+                      #warning = FALSE, # evita publicar advertencias
+                      #message = FALSE) # evita publicar mensajes
+
+Sys.setlocale("LC_ALL","ES_ES.UTF-8") # para temas de caracteres en español, recomendable
+```
+
+```{r library, include=FALSE}
+library(pacman)
+pacman::p_load(stringr,tidyverse,broom,cowplot,ggplot2)
+```
+
+```{r bbdd, include=FALSE}
+# BBDD LONG
+load("1_input/data/ELSOC_Long_2016_2019_labelled_v2.00.RData")
+
+#BBDD WIDE
+load("1_input/data/ELSOC_Wide_2016_2019_v1.00_R.RData")
+
+# Definir NA
+elsoc_long_2016_2019[elsoc_long_2016_2019==-999 | elsoc_long_2016_2019==-888] <- NA
+elsoc_wide_2016_2019[elsoc_wide_2016_2019==-888 | elsoc_wide_2016_2019==-999] <- NA
+
+#Label Olas
+elsoc_long_2016_2019$ola <- factor(elsoc_long_2016_2019$ola,labels = c('2016', '2017', '2018', '2019'))
+```
+
+En este instructivo aprenderá a realizar gráficos de barra simples para datos longitudinales. Esta sección elabora análisis para una sola variable categórica, la cual se puede agrupar por categoría según una variable a escoger.
+
+Paso 1: Seleccionar la variable categórica que se analizará
+
+- Rellenar nombre de variable *[VARIABLE]* y cada una de sus categorias *[CAT_n]*
+```{r Paso 1, echo=TRUE}
+#Ejemplo: [VARIABLE = c05_08] y [CAT_n = 'Nada', 'Poco', 'Algo', 'Bastante', 'Mucho']
+elsoc_long_2016_2019$c05_08 <- factor(elsoc_long_2016_2019$c05_08,labels = c('Nada', 'Poco', 'Algo', 'Bastante', 'Mucho'))
+```
+
+Paso 2: Crear una tabla simplificada que agrupa la variable a analizar por otra variable de interés
+
+- Rellenar nombre de variable de interés *[VARIABLE]* y agurpación de interés *[VAR_Z]*
+```{r tabla_datos_gráfico, echo=TRUE}
+#Ejemplo: [VARIABLE = c05_08] y [VAR_Z = ola]
+datos.grafico <- elsoc_long_2016_2019 %>% 
+    dplyr::filter(tipo_atricion == 1 & tipo_caso != 2) %>% 
+    dplyr::filter(!is.na(c05_08)) %>% 
+    group_by(c05_08, ola) %>% 
+    summarise(n1 = sum(ponderador02, na.rm = TRUE)) %>%
+    group_by(ola) %>%
+    mutate(n2 = sum(n1, na.rm = TRUE), porcentaje = n1/n2) %>%
+    ungroup()
+```
+
+Paso 3: Revisar la tabla recién creada
+```{r revisión, echo=TRUE}
+head(datos.grafico)
+```
+
+Luego de hacer esos 3 pasos, se realizan 5 tipos de gráfico que relacionan dos variables:
+
+(1) Variable categórica de interés *[VARIABLE]*
+
+(2) Variable que agrupa (ej: ola, tramo de edad, sexo, ciudad, zona, etc..) *[VAR_Z]*
+
+### 1. Grafico de Barras con X = 'Categoría'
+```{r bar_x_categoría, echo=TRUE}
+g_1.1 <- datos.grafico %>% 
+    ggplot(aes(y = porcentaje, x = c05_08, fill = ola, 
+               label = as.character(scales::percent(porcentaje, accuracy = .1)))) +
+  theme_bw() + 
+    geom_col(position = 'dodge2') +
+    scale_y_continuous(labels = scales::percent,
+                       limits = c(0, 1)) +
+    ylab(label = NULL) +
+    xlab(label = NULL) +
+    scale_fill_viridis_d(begin = .33, end = .66, direction = -1, option = 'viridis') +
+    geom_text(vjust = -0.8,
+              position = position_dodge(width = .9),
+              size= 2.75) +
+    theme(legend.position = 'top',
+          legend.title = element_blank()) +
+    ggtitle('Confianza en el Presidente(a) de la República según año')
+g_1.1
+```
+
+### 2.1. Grafico de Barras con X = 'Ola' - Dodge
+```{r bar_x_ola_dodge, echo=TRUE}
+datos.grafico %>% 
+  ggplot(aes(y = porcentaje, x = ola, fill = c05_08, 
+             label = as.character(scales::percent(porcentaje, accuracy = .1)))) + 
+  theme_bw() + 
+  geom_col(position = 'dodge2') +
+  scale_y_continuous(labels = scales::percent,
+                     limits = c(0, 1)) +
+  ylab(label = NULL) +
+  xlab(label = NULL) +
+  scale_fill_viridis_d(begin = 0, end = .85, direction = -1, option = 'viridis') +
+  geom_text(vjust = -0.8,
+            position = position_dodge(width = .9),
+            size= 2.75) +
+  theme(legend.position = 'top',
+        legend.title = element_blank()) +
+ggtitle('Confianza en el Presidente(a) de la República según año')
+```
+
+### 2.2. Grafico de Barras con X = 'Ola' - Stack
+```{r bar_x_ola_stack, echo=TRUE}
+datos.grafico %>% 
+  ggplot(aes(y = porcentaje, x = ola, fill = c05_08, 
+             label = as.character(scales::percent(porcentaje, accuracy = .1)))) + 
+  theme_bw() + 
+  geom_col(position = 'Stack') +
+  scale_y_continuous(labels = scales::percent,
+                     limits = c(0, 1)) +
+  ylab(label = NULL) +
+  xlab(label = NULL) +
+  scale_fill_viridis_d(begin = 0, end = .85, direction = -1, option = 'viridis') +
+  geom_text(vjust = -0.8,
+            position = position_stack(vjust= .1),
+            size= 2.55) +
+  ##eliminar el texto porque la categoría "Mucho" era muy pequeña y se corría el texto
+  theme(legend.position = 'top',
+        legend.title = element_blank()) +
+  ggtitle('Confianza en el Presidente(a) de la República cada año')
+```
+
+### 3. Grafico de Barras con X = 'Categoría' en Ola = 'año'
+```{r bar_x_cat_por_ola, echo=TRUE}
+datos.subset <- droplevels(subset(datos.grafico, datos.grafico$ola == '2019'))
+
+datos.subset %>% 
+    ggplot(aes(y = porcentaje, x = c05_08, fill = c05_08, 
+               label = as.character(scales::percent(porcentaje, accuracy = .1)))) +
+  theme_bw() + 
+    geom_col(position = 'dodge2') +
+    scale_y_continuous(labels = scales::percent,
+                       limits = c(0, 1)) +
+    ylab(label = NULL) +
+    xlab(label = NULL) +
+    scale_fill_viridis_d(begin = .33, end = .66, direction = -1, option = 'viridis') +
+    geom_text(vjust = -0.8,
+              position = position_dodge(width = .9),
+              size= 2.75) +
+    theme(legend.position = 'top',
+          legend.title = element_blank()) +
+    ggtitle('Confianza en el Presidente(a) de la República el año 2019')
+```
+
+### 4. Grafico de Barras con X = 'Ola' en Categoría = 'Nada o Poco'
+```{r recode_categoria, include=FALSE}
+elsoc_long_2016_2019$c05_08_rec  <- car::recode(elsoc_long_2016_2019$c05_08,"c('Nada','Poco')= 1;c('Algo')=2 ;c('Bastante','Mucho')= 3")
+elsoc_long_2016_2019$c05_08_rec  <- factor(elsoc_long_2016_2019$c05_08_rec,levels=c("1","2","3"), labels = c("Nada o Poco","Algo","Bastante o Mucho"))
+
+datos.grafico <- elsoc_long_2016_2019 %>% 
+    dplyr::filter(tipo_atricion == 1) %>% 
+    dplyr::filter(!is.na(c05_08_rec)) %>% 
+    group_by(c05_08_rec, ola) %>% 
+    summarise(n1 = sum(ponderador02, na.rm = TRUE)) %>%
+    group_by(ola) %>%
+    mutate(n2 = sum(n1, na.rm = TRUE), porcentaje = n1/n2) %>%
+    ungroup()
+```
+
+```{r bar_x_ola_por_cat, echo=TRUE}
+datos.subset <- droplevels(subset(datos.grafico, datos.grafico$c05_08_rec == 'Nada o Poco'))
+
+datos.subset %>% 
+    ggplot(aes(y = porcentaje, x = ola, fill = c05_08_rec, 
+               label = as.character(scales::percent(porcentaje, accuracy = .1)))) +
+  theme_bw() + 
+    geom_col(width = 0.5, position = "dodge2") +
+    scale_y_continuous(labels = scales::percent,
+                       limits = c(0, 1)) +
+    ylab(label = NULL) +
+    xlab(label = NULL) +
+    geom_text(vjust = -0.8,
+              position = position_dodge(width = .9),
+              size= 2.75) +
+    theme(legend.position="none") +
+    ggtitle('Responde "Nada o Poco" en confianza en el Presidente(a) de la República según año')
+```
+
+
