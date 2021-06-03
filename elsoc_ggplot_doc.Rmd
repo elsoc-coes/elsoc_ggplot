@@ -1,13 +1,76 @@
 ---
 title: "Documento de Visualización de Datos ELSOC Longitudinales con ggplot2"
+date: "02-06-2021"
 author: "Practicantes ELSOC 2021"
-date: "31-05-2021"
-output: html_document
+abstract: |
+ El presente documento tiene como objetivo explicar los pasos para lograr la visualización de los datos óptima a través del paquete `ggplot2` . En este sentido, el documento se divide en dos partes. La primera corresponde a la preparación de la base de datos, en donde se realizarán modificaciones a la base de datos para su posterior uso en los gráficos. La segunda parte se encarga de la visualización de datos con `ggplot2`, en donde se expondrán tres tipos de gráficos: de barra, alluvial y de líneas.
+ <br><br><br>
+output: 
+    html_document:
+      toc: true
+      theme: paper
+      highlight: pygments
+      toc_float:
+        collapsed: true
+    
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(cache=FALSE, 
+                      warning = FALSE, 
+                      message = FALSE) 
+
+Sys.setlocale("LC_ALL","ES_ES.UTF-8")
 ```
 
-## R Markdown
+---
+
+## Preparación de la base de datos
+
+### Creación de base de datos *wide* y *long* 
+
+### Selección de variables de interés
+
+### Recodificación de las categorías de respuesta
+
+### Uso de `survey`
+
+## Visualización de datos
+
+### Acerca de los plots básicos `ggplot2`
+
+El paquete `ggplot2`, al igual que otros paquetes de R, contiene plots específicos para ejercer tareas, las cuales van desde el manejamiento de los datos hasta la estética en los gráficos. A continuación especificaremos los plots más comunes con su respectiva función/definición.
+
+* Data [`data`]: Es la base donde se encontrarán los datos para la creación de los gráficos 
+
+* Geometries [`geoms`]: Configura los elementos visuales de los gráficos. Puede modificar datos estadísticos y estética.
+ 
+* Aesthetics [`aes`]: Se encarga de la estética del gráfico. Se puede cambiar lo colores, tamaños y formas. También, es posible hacer agrupaciones y editar la posición (x, y). 
+
+* Facetting [`facet`]: Sive para realizar conjuntos o sub - conjuntos de datos.
+
+* Stats [`stat`]: Se utiliza para hacer transformaciones estadísticas que nos permite comprender los datos. 
+
+* Coordinate systems [`coord`]: Modifica los ejes *x* e *y*. Si es que este no es modificado, por defecto se genera el plano cartesiano.
+
+* Themes [`theme`]: Controla la visualización de todos los elementos gráficos, a excepción de los datos. 
+
+### Acerca del uso de `survey`
+
+### Gráficos de barra
+
+### Gráficos "Alluvial"
+
+### Gráficos de líneas
+
+
+
+
+
+
+
+
+
+
+
 
