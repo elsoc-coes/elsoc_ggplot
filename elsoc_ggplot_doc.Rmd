@@ -27,11 +27,109 @@ Sys.setlocale("LC_ALL","ES_ES.UTF-8")
 
 ## Preparación de la base de datos
 
-### Creación de base de datos *wide* y *long* 
+Para comenzar, cargaremos los paquetes y la base de datos a utilizar, que corresponde a la Encuesta Longitudinal Social de Chile (ELSOC) versión wide 2016-2019, que se encuentra en el repositorio de Harvard. 
+
+```{r Cargar librerías}
+pacman::p_load(car,
+               tidyverse,
+               panelr)
+remove(list = ls())
+```
+
+```{r Cargar bbdd desde url}
+load(url("https://dataverse.harvard.edu/api/access/datafile/4606527"))
+```
 
 ### Selección de variables de interés
 
+
+```{r Seleccion de variables}
+elsoc_wide<-elsoc_wide_2016_2019 %>% dplyr::filter(tipo_atricion==1 & tipo_caso !=2) #filtrar atrición entre 2016-19 y casos c/inconsistencias mayores
+elsoc_wide <- elsoc_wide %>% dplyr::select(idencuesta, #identificador individual
+                             ponderador01_w01,ponderador01_w02,ponderador01_w03,ponderador01_w04, #ponderador población
+                             ponderador02_w01,ponderador02_w02,ponderador02_w03,ponderador02_w04, #ponderador sexo
+                             estrato_w01,estrato_w02,estrato_w03,estrato_w04, #ciudad
+                             region_w01,region_w02,region_w03,region_w04, #región
+                             m02_w01,m02_w02,m02_w03,m02_w04, #situación ocupacional
+                             d01_01_w01,d01_01_w02,d01_01_w03,d01_01_w04, #estatus social subjetivo
+                             m0_sexo_w01,m0_sexo_w02,m0_sexo_w03,m0_sexo_w04, #sexo
+                             m0_edad_w01,m0_edad_w02,m0_edad_w03,m0_edad_w04, #edad
+                             m01_w01,m01_w02,m01_w03,m01_w04, #nivel de educación
+                             c16_w01,c16_w02,c16_w03,c16_w04, #indentificación con partido político
+                             c17_w01,c17_w02,c17_w03,c17_w04, #intentificación con coalición política
+                             c28_w01,c28_w02,c28_w03,c28_w04, #de acuerdo con cambiar la constitución actual
+                             c05_08_w01,c05_08_w02,c05_08_w03,c05_08_w04) #confianza en el presidente
+                             
+```
+
+
+### Creación de base de datos de *wide* a *long* 
+
+
+```{r Transformar bbdd de wide a long}
+elsoc_long <- long_panel(data = elsoc_wide, prefix = "_w0", begin = 1, end = 4, label_location = "end",
+                         id = "idencuesta", wave = "ola")
+dim(elsoc_long)
+head(elsoc_long[1:6], n=3)
+```
+
+```{r Recode de casos perdidos en NA}
+elsoc_long[elsoc_long==-999 | elsoc_long==-888] <- NA #recodificar No sabe y No responde en NA
+sum(is.na(elsoc_long)) #indica cantidad de NA
+elsoc_long <- na.omit(elsoc_long) #filtrar NA de la BBDD
+```
+
 ### Recodificación de las categorías de respuesta
+
+```{r Recode de variables}
+#Recode Ola
+elsoc_long$ola <- factor(elsoc_long$ola,
+                         labels = c('2016', '2017', '2018', '2019'))
+#Recode estrato/ciudad
+elsoc_long$estrato <- factor(elsoc_long$estrato, 
+                             levels = c("1","2","3","4","5","6"),
+                             labels = c('Gran Santiago', 'Gran Valparaíso', 'Gran Concepción', 'Ciudades grandes', 'Ciudades medianas', 'Ciudades pequeñas'))
+elsoc_long$estrato <- sjlabelled::set_label(elsoc_long$estrato, label = c("Estrato Muestral")) #etiquetamos variable
+#Recode por zona geográfica
+elsoc_long$zona  <- car::recode(elsoc_long$region,"c('Tarapaca','Antofagasta','Atacama','Coquimbo','Arica')= 1;c('Valparaiso','Lib. Gral. B. Ohiggins','B. Ohiggins', 'Maule','Bio Bio')= 2;c('Araucania','Los Lagos','Aysen','Magallanes','Los Rios')=3 ;'Metropolitana'= 4")
+elsoc_long$zona  <- factor(elsoc_long$zona,levels=c("1","2","3","4"),
+                            labels = c("Norte","Centro","Sur","Metropolitana"))
+elsoc_long$zona <- sjlabelled::set_label(elsoc_long$zona, label = c("Zona Geográfica")) #etiquetamos variable
+#elsoc_long$zona <- sjlabelled::set_labels(elsoc_long$zona, labels = c("Norte", "Centro", "Sur", "Metropolitana"))
+#Recode situación ocupacional
+elsoc_long$socup <- factor(car::recode(elsoc_long$m02,"c(1,2,3) = 1; 7 = 2; 6 = 3; 5 = 4; c(4, 8, 9) = 5"),
+                           labels = c("Trabajo remunerado", "Trabajo doméstico no remunerado", "Desempleado/a", "Jubilado/a o pensionado/a", 
+                           "Otras categorías"))
+#Recode estatus social subjetivo
+elsoc_long$estatus<- factor(car::recode(elsoc_long$d01_01, "0:4=1;5=2;6:10=3"),
+                          labels = c('Bajo','Medio','Alto'))                          
+attr(elsoc_long$estatus, which = 'label') <- 'Estatus Social Subjetivo'
+#Recode educación
+elsoc_long$educacion <- car::recode(elsoc_long$m01,"c(1,2,3)=1;c(4,5)=2;c(6,7)=3;c(8,9,10)=4")
+elsoc_long$educacion <- factor(elsoc_long$educacion,labels = c("Basica","Media","Tecnica","Universitaria"))
+elsoc_long$educacion <- sjlabelled::set_label(elsoc_long$educacion, label = c("Nivel Educacional"))
+elsoc_long$educacion <- sjlabelled::set_labels(elsoc_long$educacion, labels = c("Basica", "Media", "Tecnica", "Universitaria"))
+#Recode sexo
+elsoc_long$sexo <- factor(elsoc_long$m0_sexo,labels = c('Hombre', 'Mujer'))
+#Recode edad
+elsoc_long$edad <- factor(car::recode(elsoc_long$m0_edad, "18:29=1;30:49=2;50:64=3;65:150=4"),
+                           labels = c('18-29', '30-49', '50-64', '65 o más'))
+attr(elsoc_long$edad, which = 'label') <- 'Tramo de edad'
+elsoc_long$edad <- sjlabelled::set_label(elsoc_long$edad, label = c("Edad en Tramos"))
+elsoc_long$edad <- sjlabelled::set_labels(elsoc_long$edad, labels = c("18 a 29", "30 a 49", "50 a 64", " 65 o mas"))
+#Recode identificación con partidos
+elsoc_long$idpart <- factor(elsoc_long$c16,labels = c('PC','PH','RD','PRO','EVO','PPD','AMP','PDC','PRI','RN','UDI','PS','PRDS','Otro','Ninguno'))
+#Recode indentifiacón con colación política
+elsoc_long$idcoal <- factor(elsoc_long$c17, labels = c('Chile Vamos','Nueva Mayoría','Frente Amplio', 'Otra','Ninguna'))
+#Recode grado de acuerdo con cambiar constitución
+elsoc_long$cambiar_consti <- factor(car::recode(elsoc_long$c28, "c(1,2)=1;c(3)=2;c(4,5)=3"))
+elsoc_long$cambiar_consti <- factor(elsoc_long$cambiar_consti, 
+                            labels = c('En desacuendo o totalmente en desacuerdo', 'Ni de acuerdo ni en desacuerdo', 
+                                       'De acuerdo o totalmente de acuerdo'))
+#Recode confianza con el presidente
+elsoc_long$c05_08 <- factor(elsoc_long$c05_08,labels = c('Nada', 'Poco', 'Algo', 'Bastante', 'Mucho'))
+View(elsoc_long)
+```
 
 ### Uso de `survey`
 
