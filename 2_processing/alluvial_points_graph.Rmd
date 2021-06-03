@@ -13,7 +13,7 @@ pacman::p_load(stringr,tidyverse,broom,cowplot,ggplot2,survey)
 ```{r Cargar BBDD}
 remove(list = ls())
 getwd()
-load("1_input/data/elsoc_long.RData")
+load("../1_input/data/elsoc_long.RData")
 ```
 #2.1 Alluvial para dos olas: identificación/no indentificación con partido o coalición política
 etiquetas.grafico2.1 <- datos2.1 %>% 

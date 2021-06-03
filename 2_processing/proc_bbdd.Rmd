@@ -35,6 +35,7 @@ Para el desarrollo del instructivo se trabajará con las siguientes variables de
 - `m01`: nivel de educación de la persona encuestada
 - `d01`: estatus social subjetivo de la persona encuestada
 - `m02`: situación ocupacional de la persona encuestada
+- `segmento`: manzanas o bloques de la muestra.
 - `estrato`: tipo de ciudad de la persona encuestada
 - `region`: región de residencia de la persona encuestada
 - `c16`: identificación con partidos políticos de la persona encuestada
@@ -62,6 +63,7 @@ elsoc_wide <- elsoc_wide %>% dplyr::select(idencuesta, #identificador individual
                              m01_w01,m01_w02,m01_w03,m01_w04, #nivel de educación
                              d01_01_w01,d01_01_w02,d01_01_w03,d01_01_w04, #estatus social subjetivo
                              m02_w01,m02_w02,m02_w03,m02_w04, #situación ocupacional
+                             segmento_w01,segmento_w02,segmento_w03,segmento_w04, #manzana o bloque
                              estrato_w01,estrato_w02,estrato_w03,estrato_w04, #ciudad
                              region_w01,region_w02,region_w03,region_w04, #región
                              c16_w01,c16_w02,c16_w03,c16_w04, #indentificación con partido político
