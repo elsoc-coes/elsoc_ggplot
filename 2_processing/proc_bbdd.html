@@ -171,108 +171,152 @@ pre code {
 </div>
 
 
-<pre class="r"><code>pacman::p_load(car,
-               tidyverse,
-               panelr)
-remove(list = ls())</code></pre>
-<pre class="r"><code>load(url(&quot;https://dataverse.harvard.edu/api/access/datafile/4606527&quot;))</code></pre>
-<pre class="r"><code>elsoc_wide&lt;-elsoc_wide_2016_2019 %&gt;% dplyr::filter(tipo_atricion==1 &amp; tipo_caso !=2) #filtrar atrición entre 2016-19 y casos c/inconsistencias mayores
+<div id="preparación-de-datos" class="section level1">
+<h1>1. Preparación de datos</h1>
+<p>En lo que sigue se especifican los pasos a seguir para obtener una base de datos procesada, con la cual es posible realizar una correcta visualización y análisis de los datos. En primer lugar se cargan las librerías que contienen funciones necesarias para la manipulación de los datos. A continuación se carga la base de datos directamente del repositorio Dataverse de ELSOC-COES. En tercer lugar, se seleccionar las variables a utilizar, filtrando casos con atrición y aquellos con inconsistencias mayores entre olas. Luego, se transforma la base de datos cargada de formato “wide” a “long”, a fin de facilitar posteriores análisis. Finalmente, se recodifican y renombran las variables a usar, todo ello con el fin de facilitar la visualización de datos.</p>
+<div id="a.-cargar-librerías" class="section level2">
+<h2>A. Cargar librerías</h2>
+</div>
+<div id="b.-cargar-base-de-datos-desde-repositorio-en-dataverse" class="section level2">
+<h2>B. Cargar base de datos desde repositorio en Dataverse</h2>
+<pre class="r"><code>load(url(&quot;https://dataverse.harvard.edu/api/access/datafile/4606527&quot;)) #cargar bbdd desde url oficial alojado en dataverse </code></pre>
+</div>
+<div id="c.-selección-de-variables-y-filtrado-de-datos" class="section level2">
+<h2>C. Selección de variables y filtrado de datos</h2>
+<p>Para el desarrollo del instructivo se trabajará con las siguientes variables de ELSOC:</p>
+<ul>
+<li><code>id</code>: número único que identifica a cada persona encuestada</li>
+<li><code>ponderador01</code>: ponderador ajustado por población</li>
+<li><code>ponderador02</code>: ponderador ajustado por población y sexo</li>
+<li><code>m0_sexo</code>: sexo de la persona encuestada</li>
+<li><code>m0_edad</code>: edad de la persona encuestada</li>
+<li><code>m01</code>: nivel de educación de la persona encuestada</li>
+<li><code>d01</code>: estatus social subjetivo de la persona encuestada</li>
+<li><code>m02</code>: situación ocupacional de la persona encuestada</li>
+<li><code>estrato</code>: tipo de ciudad de la persona encuestada</li>
+<li><code>region</code>: región de residencia de la persona encuestada</li>
+<li><code>c16</code>: identificación con partidos políticos de la persona encuestada</li>
+<li><code>c17</code>: identificación con coalición política de la persona encuestada</li>
+<li><code>c28</code>: grado de acuerdo con la necesidad de cambiar la constitución actual de la persona encuestada</li>
+<li><code>c05</code>: nivel de confianza con el presidente de la república de la persona encuestada</li>
+</ul>
+<p>Todas las cuales tienen agregado el sufijo &quot;_w0[X]&quot; que indica la ola de medición de la variable, y donde <strong>[X]</strong> corresponde al número de ola, pudiendo tomar los valores <strong>1</strong>, <strong>2</strong>, <strong>3</strong> y <strong>4</strong>, asociados a las olas 2016, 2017, 2018 y 2019 respectivamente.</p>
+<p>Finalmente, para trabajar con datos panel resulta fundamental filtrar las variables por atrición y tipo de casos, donde:</p>
+<ul>
+<li><code>tipo_atricion</code>: indica cuáles son los entrevistados en cada ola incluidas en la versión de la base de datos combinada.</li>
+<li><code>tipo_caso</code>: clasifica los casos según su consistencia intertemporal en los atributos sexo, edad y educación.</li>
+</ul>
+<p>En específico, nos quedaremos sólo con aquellos encuestados que respondieron en las cuatro olas de ELSOC (<code>tipo_atricion</code>=1) y eliminaremos de la muestra los casos con inconsistencias mayores (<code>tipo_caso</code>=2).</p>
+<pre class="r"><code>elsoc_wide &lt;- elsoc_wide_2016_2019 %&gt;% dplyr::filter(tipo_atricion==1 &amp; tipo_caso !=2) #filtrar atrición entre 2016-19 y casos c/inconsistencias mayores
 
 elsoc_wide &lt;- elsoc_wide %&gt;% dplyr::select(idencuesta, #identificador individual
                              ponderador01_w01,ponderador01_w02,ponderador01_w03,ponderador01_w04, #ponderador población
                              ponderador02_w01,ponderador02_w02,ponderador02_w03,ponderador02_w04, #ponderador sexo
-                             estrato_w01,estrato_w02,estrato_w03,estrato_w04, #ciudad
-                             region_w01,region_w02,region_w03,region_w04, #región
-                             m02_w01,m02_w02,m02_w03,m02_w04, #situación ocupacional
-                             d01_01_w01,d01_01_w02,d01_01_w03,d01_01_w04, #estatus social subjetivo
                              m0_sexo_w01,m0_sexo_w02,m0_sexo_w03,m0_sexo_w04, #sexo
                              m0_edad_w01,m0_edad_w02,m0_edad_w03,m0_edad_w04, #edad
                              m01_w01,m01_w02,m01_w03,m01_w04, #nivel de educación
+                             d01_01_w01,d01_01_w02,d01_01_w03,d01_01_w04, #estatus social subjetivo
+                             m02_w01,m02_w02,m02_w03,m02_w04, #situación ocupacional
+                             estrato_w01,estrato_w02,estrato_w03,estrato_w04, #ciudad
+                             region_w01,region_w02,region_w03,region_w04, #región
                              c16_w01,c16_w02,c16_w03,c16_w04, #indentificación con partido político
                              c17_w01,c17_w02,c17_w03,c17_w04, #intentificación con coalición política
                              c28_w01,c28_w02,c28_w03,c28_w04, #de acuerdo con cambiar la constitución actual
                              c05_08_w01,c05_08_w02,c05_08_w03,c05_08_w04) #confianza en el presidente</code></pre>
-<pre class="r"><code>elsoc_long &lt;- long_panel(data = elsoc_wide, prefix = &quot;_w0&quot;, begin = 1, end = 4, label_location = &quot;end&quot;,
-                         id = &quot;idencuesta&quot;, wave = &quot;ola&quot;)
-dim(elsoc_long)</code></pre>
-<pre><code>## [1] 7544   15</code></pre>
-<pre class="r"><code>head(elsoc_long[1:6], n=3)</code></pre>
-<pre><code>## # Panel data:    3 x 6
-## # entities:      idencuesta [1]
-## # wave variable: ola [1, 2, 3 (3 waves)]
-##   idencuesta   ola ponderador01 ponderador02 estrato region  
-##   &lt;fct&gt;      &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt;   
-## 1 1101011        1        0.988        0.846       4 Tarapaca
-## 2 1101011        2        0.835        0.715       4 Tarapaca
-## 3 1101011        3        1.02         0.959       4 Tarapaca</code></pre>
+</div>
+<div id="d.-transformar-base-de-datos-de-wide-a-long" class="section level2">
+<h2>D. Transformar base de datos de wide a long</h2>
+<p>Antes de trasformar la base de datos de wide a long, se debe tener claro el nombre de la etiqueta de periodo asociada a cada variable. En este caso, como se indicó, dicha etiqueta es el sufijo &quot;_w0“, habiendo cuatro casos asociados a cada ola:”_w01“,”_w02“,”_w03&quot; y &quot;_w04&quot;. Estos corresponden al años 2016, 2017, 2018 y 2019, respectivamente. Teniendo esta información clara se puede completar los argumentos de la función <code>long_panel</code> del paquete <code>panelr</code>. Para mayor información del uso de <code>long_panel</code> visitar el <a href="https://rdrr.io/cran/panelr/man/long_panel.html">link</a>.</p>
+<p>Estructura de la función long panel:</p>
+<div class="alert alert-info">
+<blockquote>
+<p>[nueva bbdd long] &lt;- long_panel(data = [bbdd wide], prefix = “[prefijo de la etiqueta]”, begin = [etiqueta de la primera ola], end = [etiqueta de la última ola], label_location = “[ubicación de la ola en la etiqueta]”, id = “[indentificador individual]”, wave =“[nombre de la nueva variable asociada al periodo]”).</p>
+</blockquote>
+</div>
+<pre class="r"><code>elsoc_long &lt;- long_panel(data = elsoc_wide, #base de datos formato wide
+                         prefix = &quot;_w0&quot;, #caracteres antes de la etiqueta de cada ola
+                         begin = 1, #etiqueta de la primera ola
+                         end = 4, #etiqueta de la última ola
+                         label_location = &quot;end&quot;, #indica donde se localiza la etiqueta asociada a la ola 
+                         id = &quot;idencuesta&quot;, #indica identificador individual
+                         wave = &quot;ola&quot;) #nombre que tomará la variable que indica periodo. </code></pre>
+<p>Finalmente, filtramos la base de datos long de casos perdidos.</p>
 <pre class="r"><code>elsoc_long[elsoc_long==-999 | elsoc_long==-888] &lt;- NA #recodificar No sabe y No responde en NA
 sum(is.na(elsoc_long)) #indica cantidad de NA</code></pre>
 <pre><code>## [1] 1066</code></pre>
 <pre class="r"><code>elsoc_long &lt;- na.omit(elsoc_long) #filtrar NA de la BBDD</code></pre>
-<pre class="r"><code>#Recode Ola
-elsoc_long$ola &lt;- factor(elsoc_long$ola,
-                         labels = c(&#39;2016&#39;, &#39;2017&#39;, &#39;2018&#39;, &#39;2019&#39;))
+</div>
+<div id="e.-recodificación-de-variables" class="section level2">
+<h2>E. Recodificación de variables</h2>
+<pre class="r"><code>#Recode VAR &quot;ola&quot; correspondiente a la ola de medición.
+elsoc_long$ola &lt;- factor(elsoc_long$ola,levels=c(&quot;1&quot;,&quot;2&quot;,&quot;3&quot;,&quot;4&quot;), labels = c(&#39;2016&#39;, &#39;2017&#39;, &#39;2018&#39;, &#39;2019&#39;))
+elsoc_long$ola &lt;- sjlabelled::set_label(elsoc_long$ola, label = c(&quot;Ola de Medición&quot;)) #etiquetamos variable
 
-#Recode estrato/ciudad
-elsoc_long$estrato &lt;- factor(elsoc_long$estrato, 
-                             levels = c(&quot;1&quot;,&quot;2&quot;,&quot;3&quot;,&quot;4&quot;,&quot;5&quot;,&quot;6&quot;),
-                             labels = c(&#39;Gran Santiago&#39;, &#39;Gran Valparaíso&#39;, &#39;Gran Concepción&#39;, &#39;Ciudades grandes&#39;, &#39;Ciudades medianas&#39;, &#39;Ciudades pequeñas&#39;))
-elsoc_long$estrato &lt;- sjlabelled::set_label(elsoc_long$estrato, label = c(&quot;Estrato Muestral&quot;)) #etiquetamos variable
+#Recode VAR &quot;m0_sexo&quot; / rename &quot;sexo&quot;
+elsoc_long$sexo &lt;- factor(elsoc_long$m0_sexo,labels = c(&#39;Hombre&#39;, &#39;Mujer&#39;))
+elsoc_long$sexo &lt;- sjlabelled::set_label(elsoc_long$sexo, label = c(&quot;Tipo de sexo&quot;)) #etiquetamos variable
 
-#Recode por zona geográfica
-elsoc_long$zona  &lt;- car::recode(elsoc_long$region,&quot;c(&#39;Tarapaca&#39;,&#39;Antofagasta&#39;,&#39;Atacama&#39;,&#39;Coquimbo&#39;,&#39;Arica&#39;)= 1;c(&#39;Valparaiso&#39;,&#39;Lib. Gral. B. Ohiggins&#39;,&#39;B. Ohiggins&#39;, &#39;Maule&#39;,&#39;Bio Bio&#39;)= 2;c(&#39;Araucania&#39;,&#39;Los Lagos&#39;,&#39;Aysen&#39;,&#39;Magallanes&#39;,&#39;Los Rios&#39;)=3 ;&#39;Metropolitana&#39;= 4&quot;)
+#Recode VAR &quot;m0_edad&quot; / rename &quot;edad&quot;
+elsoc_long$edad &lt;- factor(car::recode(elsoc_long$m0_edad, &quot;18:29=1;30:49=2;50:64=3;65:150=4&quot;),
+                           labels = c(&#39;18-29&#39;, &#39;30-49&#39;, &#39;50-64&#39;, &#39;65 o más&#39;))
+elsoc_long$edad &lt;- sjlabelled::set_label(elsoc_long$edad, label = c(&quot;Edad en Tramos&quot;)) #etiquetamos variable
 
-elsoc_long$zona  &lt;- factor(elsoc_long$zona,levels=c(&quot;1&quot;,&quot;2&quot;,&quot;3&quot;,&quot;4&quot;),
-                            labels = c(&quot;Norte&quot;,&quot;Centro&quot;,&quot;Sur&quot;,&quot;Metropolitana&quot;))
+#Recode VAR &quot;m01&quot; nivel educacional / rename &quot;educacion&quot;
+elsoc_long$educacion &lt;- car::recode(elsoc_long$m01,&quot;c(1,2,3)=1;c(4,5)=2;c(6,7)=3;c(8,9,10)=4&quot;)
+elsoc_long$educacion &lt;- factor(elsoc_long$educacion,labels = c(&quot;Basica&quot;,&quot;Media&quot;,&quot;Tecnica&quot;,&quot;Universitaria&quot;))
+elsoc_long$educacion &lt;- sjlabelled::set_label(elsoc_long$educacion, label = c(&quot;Nivel Educacional&quot;)) #etiquetamos variable
 
-elsoc_long$zona &lt;- sjlabelled::set_label(elsoc_long$zona, label = c(&quot;Zona Geográfica&quot;)) #etiquetamos variable
-#elsoc_long$zona &lt;- sjlabelled::set_labels(elsoc_long$zona, labels = c(&quot;Norte&quot;, &quot;Centro&quot;, &quot;Sur&quot;, &quot;Metropolitana&quot;))
+#Recode VAR &quot;d01_01&quot; estatus social subjetivo / raneme &quot;estatus&quot;
+elsoc_long$estatus&lt;- factor(car::recode(elsoc_long$d01_01, &quot;0:4=1;5=2;6:10=3&quot;),
+                          labels = c(&#39;Bajo&#39;,&#39;Medio&#39;,&#39;Alto&#39;))
+elsoc_long$estatus &lt;- sjlabelled::set_label(elsoc_long$estatus, label = c(&quot;Estatus Social Subjetivo&quot;)) #etiquetamos variable
 
-#Recode situación ocupacional
+#Recode VAR &quot;m02&quot; situación ocupacional / rename &quot;socup&quot;
 elsoc_long$socup &lt;- factor(car::recode(elsoc_long$m02,&quot;c(1,2,3) = 1; 7 = 2; 6 = 3; 5 = 4; c(4, 8, 9) = 5&quot;),
                            labels = c(&quot;Trabajo remunerado&quot;, &quot;Trabajo doméstico no remunerado&quot;, &quot;Desempleado/a&quot;, &quot;Jubilado/a o pensionado/a&quot;, 
                            &quot;Otras categorías&quot;))
+elsoc_long$socup &lt;- sjlabelled::set_label(elsoc_long$socup, label = c(&quot;Situación Ocupacional&quot;)) #etiquetamos variable
 
-#Recode estatus social subjetivo
-elsoc_long$estatus&lt;- factor(car::recode(elsoc_long$d01_01, &quot;0:4=1;5=2;6:10=3&quot;),
-                          labels = c(&#39;Bajo&#39;,&#39;Medio&#39;,&#39;Alto&#39;))                          
-attr(elsoc_long$estatus, which = &#39;label&#39;) &lt;- &#39;Estatus Social Subjetivo&#39;
+#Recode VAR &quot;estrato&quot; que refiere al tipo de ciuda / rename &quot;tipo de ciudad&quot;
+elsoc_long$tipo_ciudad &lt;- factor(elsoc_long$estrato, labels = c(&#39;Gran Santiago&#39;, &#39;Gran Valparaíso&#39;, &#39;Gran Concepción&#39;, &#39;Ciudades grandes&#39;, &#39;Ciudades medianas&#39;, &#39;Ciudades pequeñas&#39;))
+elsoc_long$tipo_ciudad &lt;- sjlabelled::set_label(elsoc_long$estrato, label = c(&quot;Tipo de ciudad&quot;)) #etiquetamos variable
 
-#Recode educación
-elsoc_long$educacion &lt;- car::recode(elsoc_long$m01,&quot;c(1,2,3)=1;c(4,5)=2;c(6,7)=3;c(8,9,10)=4&quot;)
-elsoc_long$educacion &lt;- factor(elsoc_long$educacion,labels = c(&quot;Basica&quot;,&quot;Media&quot;,&quot;Tecnica&quot;,&quot;Universitaria&quot;))
+#Recode VAR &quot;region&quot; correspondiente a regiones del país/ raname &quot;zona&quot; relativa a macrozona geográfica.
+elsoc_long$zona  &lt;- car::recode(elsoc_long$region,&quot;c(&#39;Tarapaca&#39;,&#39;Antofagasta&#39;,&#39;Atacama&#39;,&#39;Coquimbo&#39;,&#39;Arica&#39;)= 1;c(&#39;Valparaiso&#39;,&#39;Lib. Gral. B. Ohiggins&#39;,&#39;B. Ohiggins&#39;, &#39;Maule&#39;,&#39;Bio Bio&#39;)= 2;c(&#39;Araucania&#39;,&#39;Los Lagos&#39;,&#39;Aysen&#39;,&#39;Magallanes&#39;,&#39;Los Rios&#39;)=3 ;&#39;Metropolitana&#39;= 4&quot;)
+elsoc_long$zona  &lt;- factor(elsoc_long$zona,levels=c(&quot;1&quot;,&quot;2&quot;,&quot;3&quot;,&quot;4&quot;), labels = c(&quot;Norte&quot;,&quot;Centro&quot;,&quot;Sur&quot;,&quot;Metropolitana&quot;))
+elsoc_long$zona &lt;- sjlabelled::set_label(elsoc_long$zona, label = c(&quot;Zona Geográfica&quot;)) #etiquetamos variable
 
-elsoc_long$educacion &lt;- sjlabelled::set_label(elsoc_long$educacion, label = c(&quot;Nivel Educacional&quot;))
-elsoc_long$educacion &lt;- sjlabelled::set_labels(elsoc_long$educacion, labels = c(&quot;Basica&quot;, &quot;Media&quot;, &quot;Tecnica&quot;, &quot;Universitaria&quot;))
-
-#Recode sexo
-elsoc_long$sexo &lt;- factor(elsoc_long$m0_sexo,labels = c(&#39;Hombre&#39;, &#39;Mujer&#39;))
-
-#Recode edad
-elsoc_long$edad &lt;- factor(car::recode(elsoc_long$m0_edad, &quot;18:29=1;30:49=2;50:64=3;65:150=4&quot;),
-                           labels = c(&#39;18-29&#39;, &#39;30-49&#39;, &#39;50-64&#39;, &#39;65 o más&#39;))
-attr(elsoc_long$edad, which = &#39;label&#39;) &lt;- &#39;Tramo de edad&#39;
-
-elsoc_long$edad &lt;- sjlabelled::set_label(elsoc_long$edad, label = c(&quot;Edad en Tramos&quot;))
-elsoc_long$edad &lt;- sjlabelled::set_labels(elsoc_long$edad, labels = c(&quot;18 a 29&quot;, &quot;30 a 49&quot;, &quot;50 a 64&quot;, &quot; 65 o mas&quot;))
-
-#Recode identificación con partidos
+#Recode VAR &quot;c16&quot; identificación con partidos políticos / rename &quot;idpart&quot;
 elsoc_long$idpart &lt;- factor(elsoc_long$c16,labels = c(&#39;PC&#39;,&#39;PH&#39;,&#39;RD&#39;,&#39;PRO&#39;,&#39;EVO&#39;,&#39;PPD&#39;,&#39;AMP&#39;,&#39;PDC&#39;,&#39;PRI&#39;,&#39;RN&#39;,&#39;UDI&#39;,&#39;PS&#39;,&#39;PRDS&#39;,&#39;Otro&#39;,&#39;Ninguno&#39;))
+elsoc_long$idpart &lt;- sjlabelled::set_label(elsoc_long$idpart, label = c(&quot;Indentificación con Partido Político&quot;)) #etiquetamos variable
 
-#Recode indentifiacón con colación política
+#Recode VAR &quot;c17&quot; indentifiacón con colación política /rename &quot;idcoal&quot;
 elsoc_long$idcoal &lt;- factor(elsoc_long$c17, labels = c(&#39;Chile Vamos&#39;,&#39;Nueva Mayoría&#39;,&#39;Frente Amplio&#39;, &#39;Otra&#39;,&#39;Ninguna&#39;))
+elsoc_long$idcoal &lt;- sjlabelled::set_label(elsoc_long$idcoal, label = c(&quot;Indentificación con Coalición Política&quot;)) #etiquetamos variable
 
-#Recode grado de acuerdo con cambiar constitución
+#Recode VAR &quot;c28&quot; grado de acuerdo con cambiar constitución / rename &quot;cambiar_consti&quot;
 elsoc_long$cambiar_consti &lt;- factor(car::recode(elsoc_long$c28, &quot;c(1,2)=1;c(3)=2;c(4,5)=3&quot;))
-
 elsoc_long$cambiar_consti &lt;- factor(elsoc_long$cambiar_consti, 
                             labels = c(&#39;En desacuendo o totalmente en desacuerdo&#39;, &#39;Ni de acuerdo ni en desacuerdo&#39;, 
                                        &#39;De acuerdo o totalmente de acuerdo&#39;))
+elsoc_long$cambiar_consti &lt;- sjlabelled::set_label(elsoc_long$cambiar_consti, label = c(&quot;Grado de Acuerdo con Cambiar Constitución&quot;)) #etiquetamos variable
 
-#Recode confianza con el presidente
-elsoc_long$c05_08 &lt;- factor(elsoc_long$c05_08,labels = c(&#39;Nada&#39;, &#39;Poco&#39;, &#39;Algo&#39;, &#39;Bastante&#39;, &#39;Mucho&#39;))
 
-View(elsoc_long)</code></pre>
+#Recode VAR &quot;c05_08&quot; confianza en el presidente / rename &quot;conf_presi&quot;
+elsoc_long$conf_presi &lt;- factor(elsoc_long$c05_08,labels = c(&#39;Nada&#39;, &#39;Poco&#39;, &#39;Algo&#39;, &#39;Bastante&#39;, &#39;Mucho&#39;))
+elsoc_long$conf_presi &lt;- sjlabelled::set_label(elsoc_long$conf_presi, label = c(&quot;Confianza en el Presidente&quot;)) #etiquetamos variable
+
+
+View(elsoc_long) #visualizamos la bbdd procesada con las variables incorporadas.</code></pre>
+</div>
+<div id="f.-guardar-base-de-datos-formato-r.data-opcional" class="section level2">
+<h2>F. Guardar base de datos formato R.Data (opcional)</h2>
+<blockquote>
+<p>save(elsoc_long, file “[ruta de carpeta local]/elsoc_long.RData”)</p>
+</blockquote>
+<pre class="r"><code>save(elsoc_long,file = &quot;../1_input/data/elsoc_long.RData&quot;)</code></pre>
+</div>
+</div>
 
 
 
