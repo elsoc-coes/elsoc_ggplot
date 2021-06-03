@@ -1,0 +1,57 @@
+---
+title: "Survey_Explicación"
+author: "Elisa Salas"
+date: "6/3/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+# Este es el chunk de setup, opciones generales de chunks, se recomienda!
+
+knitr::opts_chunk$set(cache=FALSE, # guarda renderizaciones parciales, ahorra tiempo
+                      warning = FALSE, # evita publicar advertencias
+                      message = FALSE) # evita publicar mensajes
+
+Sys.setlocale("LC_ALL","ES_ES.UTF-8") # para temas de caracteres en español, recomendable
+```
+
+```{r library, include=FALSE}
+library(pacman)
+pacman::p_load(stringr,tidyverse,broom,cowplot,ggplot2,survey)
+```
+
+```{r Cargar BBDD}
+remove(list = ls())
+getwd()
+load("~/Documents/GitHub/elsoc_ggplot/1_input/data/elsoc_long.RData")
+```
+
+### Uso de `survey`
+
+El diseño muestral ELSOC es probabilístico, estratificado, por conglomerados y multietápico. Si bien la unidad de análisis es a nivel individual; las unidades de muestreo se realiza primero a nivel de ciudad (`estrata`), luego a nivel de manzana (`segmento`). Además de lo anterior, para lograr una correspondencia entre la muestra y la población objetivo, se utilizan ponderadores de corte transversal que ajustan por población regional y sexo. \footnote{En una etapa posterior se elaborarán ponderadores ajustados a un diseño longitudinal}
+
+Dado lo anterior; se define el diseño de la encuesta longitudinal:
+
+```{r echo=TRUE}
+elsoc_diseno <- svydesign(ids = ~segmento, #muestreo por conglomerado a nivel de manzanas (segmento)
+                          strata = ~estrato, #muestreo estratificado a nivel ciudad (estato)
+                          weights = ~ponderador02, #ponderador de corte transversal
+                          nest = TRUE,
+                          data = elsoc_long)
+```
+
+El diseño de encuesta con `elsoc_diseno` permite realizar tablas ponderadas, tal que los análisis de gráficos a realizar sean representativos de la población objetivo de ELSOC.
+
+Se muestra un ejemplo de tabla ponderada con la variable de interés: `cambiar_consti` y agrupación por `ola`
+
+```{r echo=TRUE}
+datos.tabla <- data.frame(prop.table((svytable(~cambiar_consti + #variable de intrés
+                                                 ola, #variable de agrupación (puede ser más de una)
+                                               elsoc_diseno, #diseño muestral
+                                               round = T #redondear cifras
+                                               )))) 
+
+head(datos.tabla)
+```
+
+
