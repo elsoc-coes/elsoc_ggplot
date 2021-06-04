@@ -29,41 +29,38 @@ pacman::p_load(stringr,tidyverse,broom,cowplot,ggplot2,survey)
 remove(list = ls())
 getwd()
 load("../1_input/data/elsoc_long.RData")
+
+elsoc_long$conf_presi_rec  <- car::recode(elsoc_long$conf_presi,"c('Nada')= 1;c('Poco','Algo')=2 ;c('Bastante','Mucho')= 3")
+elsoc_long$conf_presi_rec  <- factor(elsoc_long$conf_presi_rec,levels=c("1","2","3"), labels = c("Nada","Poco o Algo","Bastante o Mucho"))
+
+elsoc_diseno <- svydesign(ids = ~segmento, 
+                          strata = ~estrato, 
+                          weights = ~ponderador02, 
+                          nest = TRUE,
+                          data = elsoc_long)
 ```
 
+### Gráficos de barra
 
-En este instructivo aprenderá a realizar gráficos de barra simples para datos longitudinales. Esta sección elabora análisis para una sola variable categórica, la cual se puede agrupar por categoría según una variable a escoger.
+## Gráficos de barra que relacionan dos variables
 
-Paso 0: En caso de querer crear una variable nueva a partir de otras variables en el listado, debe realizarlo antes de los pasos a continuación.
+En este instructivo aprenderá a realizar gráficos de barra simples para datos longitudinales. Esta sección elabora análisis para una sola variable categórica, la cual se puede agrupar bajo una variable categoría.
 
-Paso 1: Seleccionar y recodificar la variable categórica que se analizará.
-
-- Rellenar nombre de variable *[VARIABLE]* y cada una de sus categorias *[CAT_n]*
-
-```{r Pasos, echo=TRUE}
-#Ejemplo: [VARIABLE = c05_08] y [CAT_n = 'Nada', 'Poco', 'Algo', 'Bastante', 'Mucho']
-elsoc_long_2016_2019$c05_08 <- factor(elsoc_long_2016_2019$c05_08,labels = c('Nada', 'Poco', 'Algo', 'Bastante', 'Mucho'))
-
-elsoc_long_2016_2019$edad <- factor(car::recode(elsoc_long_2016_2019$m0_edad, "18:29=1;30:49=2;50:64=3;65:150=4"),
-                        labels = c('18-29', '30-49', '50-64', '65 o más'))
-#categoría de zona
-elsoc_long_2016_2019$zona  <- car::recode(elsoc_long_2016_2019$region,"c('Tarapaca','Antofagasta','Atacama','Coquimbo','Arica')= 1;c('Valparaiso','Lib. Gral. B. Ohiggins','B. Ohiggins', 'Maule','Bio Bio')= 2;c('Araucania','Los Lagos','Aysen','Magallanes','Los Rios')=3 ;'Metropolitana'= 4")
-elsoc_long_2016_2019$zona  <- factor(elsoc_long_2016_2019$zona,levels=c("1","2","3","4"), labels = c("Norte","Centro","Sur","Metropolitana"))
-```
+Paso 1: En caso de querer crear una variable nueva a partir de otras variables en el listado, debe realizarlo antes de los pasos a continuación.
 
 Paso 2: Crear una tabla simplificada que agrupa la variable a analizar por otra variable de interés
 
 - Rellenar nombre de variable de interés *[VARIABLE]* y agurpación de interés *[VAR_Z]*
 ```{r tabla_datos_gráfico, echo=TRUE}
-#Ejemplo: [VARIABLE = c05_08] y [VAR_Z = ola]
-datos.grafico <- elsoc_long_2016_2019 %>% 
-    dplyr::filter(tipo_atricion == 1 & tipo_caso != 2) %>% 
-    dplyr::filter(!is.na(c05_08)) %>% 
-    group_by(c05_08, ola, m0_sexo, edad) %>% 
-    summarise(n1 = sum(ponderador02, na.rm = TRUE)) %>%
-    group_by(ola) %>%
-    mutate(n2 = sum(n1, na.rm = TRUE), porcentaje = n1/n2) %>%
-    ungroup()
+#Ejemplo: [VARIABLE = conf_presi] y [VAR_Z = ola]
+a <- data.frame((svytable(~conf_presi + ola, elsoc_diseno, round = F)))
+
+b <- a %>% group_by(ola) %>% transmute(porcentaje=Freq/sum(Freq)) 
+b$ola <- NULL
+a$Freq <- NULL
+
+datos.grafico<- cbind(a,b)
+
 ```
 
 Paso 3: Revisar la tabla recién creada
@@ -77,13 +74,13 @@ Luego de hacer esos 3 pasos, se realizan 5 tipos de gráfico que relacionan dos 
 
 (2) Variable que agrupa (ej: ola, tramo de edad, sexo, ciudad, zona, etc..) *[VAR_Z]*
 
-### 1. Grafico de Barras con X = 'Categoría'
+### 1. Grafico de Barras con X = 'Categoría' 
 ```{r bar_x_categoría, echo=TRUE}
 datos.grafico %>% 
-    ggplot(aes(y = porcentaje, x = c05_08, fill = ola, 
+    ggplot(aes(y = porcentaje, x = conf_presi, fill = ola, 
                label = as.character(scales::percent(porcentaje, accuracy = .1)))) +
   theme_bw() + 
-    geom_col(position = 'dodge2') +
+    geom_col(position= 'dodge2') +
     scale_y_continuous(labels = scales::percent,
                        limits = c(0, 1)) +
     ylab(label = NULL) +
@@ -101,7 +98,7 @@ datos.grafico %>%
 ### 2.1. Grafico de Barras con X = 'Ola' - Dodge
 ```{r bar_x_ola_dodge, echo=TRUE}
 datos.grafico %>% 
-  ggplot(aes(y = porcentaje, x = ola, fill = c05_08, 
+  ggplot(aes(y = porcentaje, x = ola, fill = conf_presi, 
              label = as.character(scales::percent(porcentaje, accuracy = .1)))) + 
   theme_bw() + 
   geom_col(position = 'dodge2') +
@@ -121,7 +118,7 @@ ggtitle('Confianza en el Presidente(a) de la República según año')
 ### 2.2. Grafico de Barras con X = 'Ola' - Stack
 ```{r bar_x_ola_stack, echo=TRUE}
 datos.grafico %>% 
-  ggplot(aes(y = porcentaje, x = ola, fill = c05_08, 
+  ggplot(aes(y = porcentaje, x = ola, fill = conf_presi, 
              label = as.character(scales::percent(porcentaje, accuracy = .1)))) + 
   theme_bw() + 
   geom_col(position = 'Stack') +
@@ -139,12 +136,20 @@ datos.grafico %>%
   ggtitle('Confianza en el Presidente(a) de la República cada año')
 ```
 
-### 2.3
+### 2.3 Dos categorías de agrupación: Edad y Ola
 ```{r}
-datos.subset <- droplevels(subset(datos.grafico, datos.grafico$edad == '18-29'))
+c <- data.frame(svytable(~conf_presi + ola + edad, elsoc_diseno, round = T))
+
+d <- c %>% group_by(edad) %>% transmute(porcentaje=Freq/sum(Freq)) 
+d$edad <- NULL
+c$Freq <- NULL
+
+datos.grafico2<- cbind(c,d)
+
+datos.subset <- droplevels(subset(datos.grafico2, datos.grafico2$edad == '18-29'))
 
 datos.subset %>% 
-    ggplot(aes(y = porcentaje, x = c05_08, fill = ola, 
+    ggplot(aes(y = porcentaje, x = ola, fill = conf_presi, 
                label = as.character(scales::percent(porcentaje, accuracy = .1)))) +
   theme_bw() + 
     geom_col(position = 'dodge2') +
@@ -167,7 +172,7 @@ datos.subset %>%
 datos.subset <- droplevels(subset(datos.grafico, datos.grafico$ola == '2019'))
 
 datos.subset %>% 
-    ggplot(aes(y = porcentaje, x = c05_08, fill = c05_08, 
+    ggplot(aes(y = porcentaje, x = conf_presi, fill = conf_presi, 
                label = as.character(scales::percent(porcentaje, accuracy = .1)))) +
   theme_bw() + 
     geom_col(position = 'dodge2') +
@@ -184,29 +189,23 @@ datos.subset %>%
     ggtitle('Confianza en el Presidente(a) de la República el año 2019')
 ```
 
-### 3.1. Grafico de Barras con X = 'Categoría' en Ola = 'año' (uso base wide)
-¿? Consultar si es mejor mantener el uso de base long. 
 
 ### 4. Grafico de Barras con X = 'Ola' en Categoría = 'Nada o Poco'
 ```{r recode_categoria, include=FALSE}
-elsoc_long_2016_2019$c05_08_rec  <- car::recode(elsoc_long_2016_2019$c05_08,"c('Nada','Poco')= 1;c('Algo')=2 ;c('Bastante','Mucho')= 3")
-elsoc_long_2016_2019$c05_08_rec  <- factor(elsoc_long_2016_2019$c05_08_rec,levels=c("1","2","3"), labels = c("Nada o Poco","Algo","Bastante o Mucho"))
+e <- data.frame(svytable(~conf_presi_rec + ola, elsoc_diseno, round = T))
 
-datos.grafico <- elsoc_long_2016_2019 %>% 
-    dplyr::filter(tipo_atricion == 1) %>% 
-    dplyr::filter(!is.na(c05_08_rec)) %>% 
-    group_by(c05_08_rec, ola) %>% 
-    summarise(n1 = sum(ponderador02, na.rm = TRUE)) %>%
-    group_by(ola) %>%
-    mutate(n2 = sum(n1, na.rm = TRUE), porcentaje = n1/n2) %>%
-    ungroup()
+f <- e %>% group_by(ola) %>% transmute(porcentaje=Freq/sum(Freq)) 
+f$ola <- NULL
+e$Freq <- NULL
+
+datos.grafico3<- cbind(e,f)
 ```
 
 ```{r bar_x_ola_por_cat, echo=TRUE}
-datos.subset <- droplevels(subset(datos.grafico, datos.grafico$c05_08_rec == 'Nada o Poco'))
+datos.subset <- droplevels(subset(datos.grafico3, datos.grafico3$conf_presi_rec == 'Poco o Algo'))
 
 datos.subset %>% 
-    ggplot(aes(y = porcentaje, x = ola, fill = c05_08_rec, 
+    ggplot(aes(y = porcentaje, x = ola, fill = conf_presi_rec, 
                label = as.character(scales::percent(porcentaje, accuracy = .1)))) +
   theme_bw() + 
     geom_col(width = 0.5, position = "dodge2") +
@@ -224,27 +223,16 @@ datos.subset %>%
 
 #### Quiero agregar los gráficos del estilo: aumenta, se mantiene, disminuye
 
-### Dudas:
-El tema de los ponderadores, yo debería cambiar el group_by() cada vez que quiera hacer un grafico por otra variable? 
-EJ: si en vez de ola, quiero hacerlo por edad --> en ese caso tengo que hacer un group_by(edad) para sacar el n2
-
-
 
 # PARTE 2: Gráfico de barras para más de dos variables
 En este instructivo aprenderá a realizar gráficos de barra más complejos para datos longitudinales. Esta sección elabora análisis para graficar tres o más variables en un mismo gráfico. 
 
 Paso 1: Seleccionar y recodificar las variables que se analizarán
 
-- Rellenar nombre de variable *[VARIABLE]* y cada una de sus categorias *[CAT_n]*
-```{r Paso 1, echo=FALSE}
-#Ejemplo: Actualmente en Chile, ¿Cuán importante es para surgir en la vida…?
-#[VARIABLE_1 = d05_01] y [CAT_n = 'Nada', 'Poco', 'Algo', 'Bastante', 'Mucho']
-#categoría de edad
-
 ```
 ## Grafico de Barras por cada variable X = 'Categoría'
 ```{r creo que final}
-datos.grafico <- elsoc_long_2016_2019 %>% 
+datos.grafico <- elsoc_long %>% 
         dplyr::filter(tipo_atricion == 1 & tipo_caso != 2) %>% 
         dplyr::select(ola, ponderador02, starts_with('d05_')) %>% 
         lapply(sticky::unsticky) %>% data.frame() %>% 
@@ -258,7 +246,7 @@ datos.grafico <- elsoc_long_2016_2019 %>%
     summarise(n1 = sum(ponderador02, na.rm = TRUE)) %>% 
     dplyr::filter(!is.na(respuesta)) %>% 
     group_by(ola, variable) %>% 
-    mutate(n2 = sum(n1, na.rm = TRUE), porcentaje = n1/n2) %>% 
+    mutate(n2 = sum(n1, na.rm = TRUE), Freq = n1/n2) %>% 
     ungroup()
 ```
 
@@ -266,8 +254,8 @@ datos.grafico <- elsoc_long_2016_2019 %>%
 datos.subset <- droplevels(subset(datos.grafico, datos.grafico$respuesta == 'Bastante o Muy Importante'))
 
 datos.subset %>% 
-    ggplot(aes(y = porcentaje, x = ola, fill = variable, 
-               label = as.character(scales::percent(porcentaje, accuracy = .1)))) +
+    ggplot(aes(y = Freq, x = ola, fill = variable, 
+               label = as.character(scales::percent(Freq, accuracy = .1)))) +
   theme_bw() + 
     geom_col(width = 0.5, position = "dodge2") +
     scale_y_continuous(labels = scales::percent,
@@ -281,208 +269,5 @@ datos.subset %>%
               size= 2.75) +
     theme(legend.position="none") +
     ggtitle('Responde "Bastante o Muy Importante" según año')
-```
-
-# PARTE 3: Gráfico Alluvial
-
-#2.1 Alluvial para dos olas: identificación/no indentificación con partido o coalición política
-```{r datos alluvial 2.1: idnull 2 olas}
-datos2.1 <- elsoc_long_2016_2019 %>% 
-    dplyr::filter(tipo_atricion == 1 & tipo_caso != 2) %>%
-  mutate(idpart = factor(c16,
-                          labels = c('PC','PH','RD','PRO','EVO','PPD','AMP','PDC','PRI','RN','UDI','PS','PRDS','Otro','Ninguno'))) %>%
-  mutate(idcoal = factor(c17,
-                          labels = c('Chile Vamos','Nueva Mayoría','Frente Amplio', 'Otra','Ninguna'))) %>%
-    dplyr::filter(!is.na(idpart)) %>%
-    dplyr::filter(!is.na(idcoal)) %>%
-    group_by(idencuesta,idpart,idcoal,ola) %>%
-    summarise(n1 = sum(ponderador02, na.rm = TRUE)) %>%
-    group_by(ola) %>%
-    mutate(n2 = sum(n1, na.rm = TRUE), porcentaje = n1/n2) %>%
-    ungroup()
-
-datos2.1$idnull <- factor(datos2.1$idpart == 'Ninguno' & datos2.1$idcoal == 'Ninguna',
-                               levels = c(FALSE, TRUE),
-                               labels = c('Se identifica con algun partido y/o coalicion politica', 'No se identifica con ningun partido ni coalicion politica'))
-
-etiquetas.grafico2.1 <- datos2.1 %>% 
-    group_by(idnull, ola) %>% 
-    summarise(porcentaje = sum(porcentaje, na.rm = TRUE)) %>% 
-    mutate(idencuesta = 1)
-
-head(datos2.1)
-```
-
-```{r gráfico alluvial 2.1: idnull 2 olas}
-
-ggplot(datos2.1, aes(x = ola, fill = idnull, stratum = idnull, 
-               alluvium = idencuesta, y = porcentaje)) +
-    ggalluvial::geom_flow(alpha = .66) + 
-    ggalluvial::geom_stratum(linetype = 0) +
-    scale_y_continuous(labels = scales::percent) + 
-    ylab(label = NULL) +
-    xlab(label = NULL) + 
-    theme(legend.position = 'top',
-          legend.title = element_blank()) +
-    scale_fill_viridis_d(begin = 0, end = .85, direction = -1, option = 'viridis') +
-    geom_text(data = etiquetas.grafico2.1, 
-              aes(label = scales::percent(porcentaje, accuracy = .1)),
-              position = position_stack(vjust = .5),
-              show.legend = FALSE,
-              size = 2.75,
-              color = rep('white')) +
-    ggtitle('Cambio de frecuencias de indentificación con coalición política según año')
-```
-
-#2.1 Alluvial para cuatro olas: identificación con coalición política
-```{r datos alluvial 2.2: idpol 4 olas, echo=TRUE}
-#Ejemplo: [VARIABLE = c05_08] y [VAR_Z = ola]
-datos2.2 <- elsoc_long_2016_2019 %>% 
-    dplyr::filter(tipo_atricion == 1 & tipo_caso != 2) %>%
-  mutate(idpol = factor(c17,
-                          labels = c('Chile Vamos','Nueva Mayoría','Frente Amplio', 'Otra','Ninguna'))) %>%
-    dplyr::filter(!is.na(idpol)) %>%
-    group_by(idencuesta,idpol, ola) %>%
-    summarise(n1 = sum(ponderador02, na.rm = TRUE)) %>%
-    group_by(ola) %>%
-    mutate(n2 = sum(n1, na.rm = TRUE), porcentaje = n1/n2) %>%
-    ungroup()
-
-etiquetas.grafico2.2 <- datos2.2 %>% 
-    group_by(idpol,ola) %>% 
-    summarise(porcentaje = sum(porcentaje, na.rm = TRUE)) %>% 
-    mutate(idencuesta = 1)
-head(datos2.2)
-```
-
-```{r gráfíco alluvial 2.2: idpol 4 olas}
-ggplot(datos2.2, aes(x = ola, fill = idpol, stratum = idpol, 
-               alluvium = idencuesta, y = porcentaje)) +
-    ggalluvial::geom_flow(alpha = .66) + 
-    ggalluvial::geom_stratum(linetype = 0) +
-    scale_y_continuous(labels = scales::percent) + 
-    ylab(label = NULL) +
-    xlab(label = NULL) + 
-    theme(legend.position = 'top',
-          legend.title = element_blank()) +
-    scale_fill_viridis_d(begin = 0, end = .85, direction = -1, option = 'viridis') +
-    geom_text(data = etiquetas.grafico2.2, 
-              aes(label = scales::percent(porcentaje, accuracy = .1)),
-              position = position_stack(vjust = .5),
-              show.legend = FALSE,
-              size = 2.75,
-              color = rep('white'))+
-  ggtitle('Cambio de frecuencias de indentificación con coalición política según año')
-```
-
-#2.3 Alluvial para dos o más categorías: situación ocupacional
-```{r datos alluvial 2.3: socup}
-elsoc_long_2016_2019$socup <- car::recode(elsoc_long_2016_2019$m02,"c(1,2,3) = 1; 7 = 2; 6 = 3; 5 = 4; c(4, 8, 9) = 5")
-elsoc_long_2016_2019$socup <- factor(elsoc_long_2016_2019$socup, 
-                            labels = c("Trabajo remunerado", "Trabajo doméstico no remunerado", "Desempleado/a", "Jubilado/a o pensionado/a", "Otras categorías"))
-
-datos2.3 <- elsoc_long_2016_2019 %>% 
-    dplyr::filter(tipo_atricion == 1 & tipo_caso != 2) %>%
-    dplyr::filter(!is.na(socup)) %>%
-    group_by(idencuesta,socup,m0_sexo,ola) %>%
-    summarise(n1 = sum(ponderador02, na.rm = TRUE)) %>%
-    group_by(ola,m0_sexo) %>%
-    mutate(n2 = sum(n1, na.rm = TRUE), porcentaje = n1/n2) %>%
-    ungroup()
-
-etiquetas.grafico2.3 <- datos2.3 %>% 
-    group_by(socup,ola, m0_sexo) %>% 
-    summarise(porcentaje = sum(porcentaje, na.rm = TRUE)) %>% 
-    mutate(idencuesta = 1)
-
-head(datos2.3)
-
-```
-datos2.3b <- elsoc_long_2016_2019 %>% 
-        dplyr::filter(tipo_atricion == 1 & tipo_caso != 2) %>% 
-        dplyr::select(ola, ponderador02, starts_with('d05_')) %>% 
-        lapply(sticky::unsticky) %>% data.frame() %>% 
-        pivot_longer(cols = starts_with('d05_'))  %>%
-        mutate(variable = factor(name,
-                             labels = c('Provenir de una familia rica o con muchos recursos', ' Tener un buen nivel de educación', ' Tener ambición', ' El trabajo duro')),
-           respuesta = case_when(value == 1 | value == 2 ~ 'Nada o Poco Importante',
-                                 value == 3  ~ 'Algo Importante',
-                                 value == 4 | value == 5 ~ 'Bastante o Muy Importante')) %>% 
-    group_by(ola, variable, respuesta) %>% 
-    summarise(n1 = sum(ponderador02, na.rm = TRUE)) %>% 
-    dplyr::filter(!is.na(respuesta)) %>% 
-    group_by(ola, variable) %>% 
-    mutate(n2 = sum(n1, na.rm = TRUE), porcentaje = n1/n2) %>% 
-    ungroup()
-```{r gráfico alluvial 2.3: socup por sexo}
-ggplot(datos2.3, aes(x = ola, fill = socup, stratum = socup, 
-               alluvium = idencuesta, y = porcentaje)) +
-    ggalluvial::geom_flow(alpha = .66) + 
-    ggalluvial::geom_stratum(linetype = 0) +
-    scale_y_continuous(labels = scales::percent) +
-    ylab(label = NULL) +
-    xlab(label = NULL) +
-    theme(legend.position = 'top',
-          legend.title = element_blank()) +
-    scale_fill_viridis_d(begin = 0, end = .85, direction = -1, option = 'viridis') +
-    facet_grid(.~m0_sexo)+
-    geom_text(data = etiquetas.grafico2.3, 
-              aes(label = scales::percent(porcentaje, accuracy = .1)),
-              position = position_stack(vjust = .5),
-              show.legend = FALSE,
-              size = 2.75,
-              color = rep('white'))+
-  ggtitle('Cambio de frecuencias en situación ocupacional para hombres y mujeres')
-```
-
-# PARTE 4: Gráfico Líneas y Puntos
-#3.1 Lineas y puntos 
-
-```{r datos linea y puntos 3.1: constitución}
-#sjmisc::frq(elsoc_long_2016_2019$conformidad_consti)
-elsoc_long_2016_2019$conformidad_consti <- car::recode(elsoc_long_2016_2019$c26, "c(1,2)=1;c(3)=2;c(4,5)=3")
-elsoc_long_2016_2019$conformidad_consti <- factor(elsoc_long_2016_2019$conformidad_consti, 
-                            labels = c('Disconforme o muy disconforme', 'Indiferente', 'Conforme o muy conforme'))
-elsoc_long_2016_2019$importa_cambiar_consti <- car::recode(elsoc_long_2016_2019$c27, "c(1,2)=1;c(3)=2;c(4,5)=3")
-elsoc_long_2016_2019$importa_cambiar_consti <- factor(elsoc_long_2016_2019$importa_cambiar_consti, 
-                            labels = c('Poco importante o nada importante', 'Algo importante', 'Bastante importante o muy importante'))
-
-elsoc_long_2016_2019$cambiar_consti <- car::recode(elsoc_long_2016_2019$c27, "c(1,2)=1;c(3)=2;c(4,5)=3")
-elsoc_long_2016_2019$cambiar_consti <- factor(elsoc_long_2016_2019$cambiar_consti, 
-                            labels = c('En desacuendo o totalmente en desacuerdo', 'Ni de acuerdo ni en desacuerdo', 'De acuerdo o totalmente de acuerdo'))
-
-
-datos3.1 <- elsoc_long_2016_2019 %>% 
-    dplyr::filter(tipo_atricion == 1 & tipo_caso != 2) %>%
-    dplyr::filter(!is.na(conformidad_consti)) %>%
-    dplyr::filter(!is.na(importa_cambiar_consti)) %>%
-    dplyr::filter(!is.na(cambiar_consti)) %>%
-    group_by(idencuesta,conformidad_consti,importa_cambiar_consti,cambiar_consti,ola) %>%
-    summarise(n1 = sum(ponderador02, na.rm = TRUE)) %>%
-    group_by(ola) %>%
-    mutate(n2 = sum(n1, na.rm = TRUE), porcentaje = n1/n2) %>%
-    ungroup()
-
-etiquetas.grafico3.1 <- datos3.1 %>% 
-    group_by(cambiar_consti,ola) %>% 
-    summarise(porcentaje = sum(porcentaje, na.rm = TRUE)) %>% 
-    mutate(idencuesta = 1)
-```
-
-```{r}
-ggplot(etiquetas.grafico3.1,aes(y = porcentaje, x = ola, color = cambiar_consti, group = cambiar_consti,
-               label = as.character(scales::percent(porcentaje, accuracy = .1)))) +
-    geom_line(size = 1) +
-    geom_point(size = 1.8) +
-    scale_y_continuous(labels = scales::percent,
-                       limits = c(0, .4)) +
-    ylab(label = NULL) +
-    xlab(label = NULL) +
-    scale_color_viridis_d(begin = .2, end = .5, direction = 1, option = 'viridis') +
-    geom_text(vjust = -0.8,
-    posilinetion = position_dodge(width = .9),
-    size= 2.75) +
-    theme(legend.position = 'top',
-          legend.title = element_blank())
 ```
 

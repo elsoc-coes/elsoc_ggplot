@@ -53,5 +53,18 @@ datos.tabla <- data.frame(prop.table((svytable(~cambiar_consti + #variable de in
 
 head(datos.tabla)
 ```
+Si busco la frecuencia por año entonces:
+
+```{r}
+a <- data.frame((svytable(~cambiar_consti + ola, elsoc_diseno, round = F)))
+
+b <- a %>% group_by(ola) %>% transmute(porcentaje=Freq/sum(Freq)) 
+b$ola <- NULL
+a$Freq <- NULL
+
+datos.grafico<- cbind(a,b)
+
+head(datos.grafico)
+```
 
 
