@@ -164,11 +164,11 @@ elsoc_long$conf_presi <- sjlabelled::set_label(elsoc_long$conf_presi, label = c(
 
 #Recode VAR "c05_02" confianza en partidos políticos / rename "conf_part"
 elsoc_long$conf_part <- factor(elsoc_long$c05_02,labels = c('Nada', 'Poco', 'Algo', 'Bastante', 'Mucho'))
-elsoc_long$conf_part <- sjlabelled::set_label(elsoc_long$conf_presi, label = c("Confianza en Partidos Políticos")) #etiquetamos variable
+elsoc_long$conf_part <- sjlabelled::set_label(elsoc_long$conf_part, label = c("Confianza en Partidos Políticos")) #etiquetamos variable
 
 #Recode VAR "c05_03" confianza en carabineros / rename "conf_carb"
 elsoc_long$conf_carb <- factor(elsoc_long$c05_03,labels = c('Nada', 'Poco', 'Algo', 'Bastante', 'Mucho'))
-elsoc_long$conf_carb <- sjlabelled::set_label(elsoc_long$conf_presi, label = c("Confianza en Carabineros")) #etiquetamos variable
+elsoc_long$conf_carb <- sjlabelled::set_label(elsoc_long$conf_carb, label = c("Confianza en Carabineros")) #etiquetamos variable
 
 
 View(elsoc_long) #visualizamos la bbdd procesada con las variables incorporadas.
