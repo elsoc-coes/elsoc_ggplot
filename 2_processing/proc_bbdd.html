@@ -193,6 +193,7 @@ pre code {
 <li><code>m01</code>: nivel de educación de la persona encuestada</li>
 <li><code>d01</code>: estatus social subjetivo de la persona encuestada</li>
 <li><code>m02</code>: situación ocupacional de la persona encuestada</li>
+<li><code>segmento</code>: manzanas o bloques de la muestra.</li>
 <li><code>estrato</code>: tipo de ciudad de la persona encuestada</li>
 <li><code>region</code>: región de residencia de la persona encuestada</li>
 <li><code>c16</code>: identificación con partidos políticos de la persona encuestada</li>
@@ -203,7 +204,7 @@ pre code {
 <p>Todas las cuales tienen agregado el sufijo &quot;_w0[X]&quot; que indica la ola de medición de la variable, y donde <strong>[X]</strong> corresponde al número de ola, pudiendo tomar los valores <strong>1</strong>, <strong>2</strong>, <strong>3</strong> y <strong>4</strong>, asociados a las olas 2016, 2017, 2018 y 2019 respectivamente.</p>
 <p>Finalmente, para trabajar con datos panel resulta fundamental filtrar las variables por atrición y tipo de casos, donde:</p>
 <ul>
-<li><code>tipo_atricion</code>: indica cuáles son los entrevistados en cada ola incluidas en la versión de la base de datos combinada.</li>
+<li><code>tipo_atricion</code>: indica cantidad de encuestados que responde a cada ola incluidas en la versión de la base de datos combinada.</li>
 <li><code>tipo_caso</code>: clasifica los casos según su consistencia intertemporal en los atributos sexo, edad y educación.</li>
 </ul>
 <p>En específico, nos quedaremos sólo con aquellos encuestados que respondieron en las cuatro olas de ELSOC (<code>tipo_atricion</code>=1) y eliminaremos de la muestra los casos con inconsistencias mayores (<code>tipo_caso</code>=2).</p>
@@ -217,21 +218,22 @@ elsoc_wide &lt;- elsoc_wide %&gt;% dplyr::select(idencuesta, #identificador indi
                              m01_w01,m01_w02,m01_w03,m01_w04, #nivel de educación
                              d01_01_w01,d01_01_w02,d01_01_w03,d01_01_w04, #estatus social subjetivo
                              m02_w01,m02_w02,m02_w03,m02_w04, #situación ocupacional
+                             segmento_w01,segmento_w02,segmento_w03,segmento_w04, #manzana o bloque
                              estrato_w01,estrato_w02,estrato_w03,estrato_w04, #ciudad
                              region_w01,region_w02,region_w03,region_w04, #región
                              c16_w01,c16_w02,c16_w03,c16_w04, #indentificación con partido político
                              c17_w01,c17_w02,c17_w03,c17_w04, #intentificación con coalición política
                              c28_w01,c28_w02,c28_w03,c28_w04, #de acuerdo con cambiar la constitución actual
-                             c05_08_w01,c05_08_w02,c05_08_w03,c05_08_w04) #confianza en el presidente</code></pre>
+                             c05_08_w01,c05_08_w02,c05_08_w03,c05_08_w04, #confianza en el presidente
+                             c05_02_w01,c05_02_w02,c05_02_w03,c05_02_w04, #confianza en partidos políticos
+                             c05_03_w01,c05_03_w02,c05_03_w03,c05_03_w04) #confianza en carabineros</code></pre>
 </div>
 <div id="d.-transformar-base-de-datos-de-wide-a-long" class="section level2">
 <h2>D. Transformar base de datos de wide a long</h2>
 <p>Antes de trasformar la base de datos de wide a long, se debe tener claro el nombre de la etiqueta de periodo asociada a cada variable. En este caso, como se indicó, dicha etiqueta es el sufijo &quot;_w0“, habiendo cuatro casos asociados a cada ola:”_w01“,”_w02“,”_w03&quot; y &quot;_w04&quot;. Estos corresponden al años 2016, 2017, 2018 y 2019, respectivamente. Teniendo esta información clara se puede completar los argumentos de la función <code>long_panel</code> del paquete <code>panelr</code>. Para mayor información del uso de <code>long_panel</code> visitar el <a href="https://rdrr.io/cran/panelr/man/long_panel.html">link</a>.</p>
 <p>Estructura de la función long panel:</p>
 <div class="alert alert-info">
-<blockquote>
 <p>[nueva bbdd long] &lt;- long_panel(data = [bbdd wide], prefix = “[prefijo de la etiqueta]”, begin = [etiqueta de la primera ola], end = [etiqueta de la última ola], label_location = “[ubicación de la ola en la etiqueta]”, id = “[indentificador individual]”, wave =“[nombre de la nueva variable asociada al periodo]”).</p>
-</blockquote>
 </div>
 <pre class="r"><code>elsoc_long &lt;- long_panel(data = elsoc_wide, #base de datos formato wide
                          prefix = &quot;_w0&quot;, #caracteres antes de la etiqueta de cada ola
@@ -243,13 +245,13 @@ elsoc_wide &lt;- elsoc_wide %&gt;% dplyr::select(idencuesta, #identificador indi
 <p>Finalmente, filtramos la base de datos long de casos perdidos.</p>
 <pre class="r"><code>elsoc_long[elsoc_long==-999 | elsoc_long==-888] &lt;- NA #recodificar No sabe y No responde en NA
 sum(is.na(elsoc_long)) #indica cantidad de NA</code></pre>
-<pre><code>## [1] 1066</code></pre>
+<pre><code>## [1] 1142</code></pre>
 <pre class="r"><code>elsoc_long &lt;- na.omit(elsoc_long) #filtrar NA de la BBDD</code></pre>
 </div>
 <div id="e.-recodificación-de-variables" class="section level2">
 <h2>E. Recodificación de variables</h2>
 <pre class="r"><code>#Recode VAR &quot;ola&quot; correspondiente a la ola de medición.
-elsoc_long$ola &lt;- factor(elsoc_long$ola,levels=c(&quot;1&quot;,&quot;2&quot;,&quot;3&quot;,&quot;4&quot;), labels = c(&#39;2016&#39;, &#39;2017&#39;, &#39;2018&#39;, &#39;2019&#39;))
+elsoc_long$ola &lt;- factor(elsoc_long$ola,labels = c(&#39;2016&#39;, &#39;2017&#39;, &#39;2018&#39;, &#39;2019&#39;))
 elsoc_long$ola &lt;- sjlabelled::set_label(elsoc_long$ola, label = c(&quot;Ola de Medición&quot;)) #etiquetamos variable
 
 #Recode VAR &quot;m0_sexo&quot; / rename &quot;sexo&quot;
@@ -305,6 +307,14 @@ elsoc_long$cambiar_consti &lt;- sjlabelled::set_label(elsoc_long$cambiar_consti,
 #Recode VAR &quot;c05_08&quot; confianza en el presidente / rename &quot;conf_presi&quot;
 elsoc_long$conf_presi &lt;- factor(elsoc_long$c05_08,labels = c(&#39;Nada&#39;, &#39;Poco&#39;, &#39;Algo&#39;, &#39;Bastante&#39;, &#39;Mucho&#39;))
 elsoc_long$conf_presi &lt;- sjlabelled::set_label(elsoc_long$conf_presi, label = c(&quot;Confianza en el Presidente&quot;)) #etiquetamos variable
+
+#Recode VAR &quot;c05_02&quot; confianza en partidos políticos / rename &quot;conf_part&quot;
+elsoc_long$conf_part &lt;- factor(elsoc_long$c05_02,labels = c(&#39;Nada&#39;, &#39;Poco&#39;, &#39;Algo&#39;, &#39;Bastante&#39;, &#39;Mucho&#39;))
+elsoc_long$conf_part &lt;- sjlabelled::set_label(elsoc_long$conf_presi, label = c(&quot;Confianza en Partidos Políticos&quot;)) #etiquetamos variable
+
+#Recode VAR &quot;c05_03&quot; confianza en carabineros / rename &quot;conf_carb&quot;
+elsoc_long$conf_carb &lt;- factor(elsoc_long$c05_03,labels = c(&#39;Nada&#39;, &#39;Poco&#39;, &#39;Algo&#39;, &#39;Bastante&#39;, &#39;Mucho&#39;))
+elsoc_long$conf_carb &lt;- sjlabelled::set_label(elsoc_long$conf_presi, label = c(&quot;Confianza en Carabineros&quot;)) #etiquetamos variable
 
 
 View(elsoc_long) #visualizamos la bbdd procesada con las variables incorporadas.</code></pre>

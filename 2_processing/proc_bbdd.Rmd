@@ -47,7 +47,7 @@ Todas las cuales tienen agregado el sufijo "_w0[X]" que indica la ola de medici�
 
 Finalmente, para trabajar con datos panel resulta fundamental filtrar las variables por atrición y tipo de casos, donde:
 
-- `tipo_atricion`: indica cuáles son los entrevistados en cada ola incluidas en la versión de la base de datos combinada.
+- `tipo_atricion`: indica cantidad de encuestados que responde a cada ola incluidas en la versión de la base de datos combinada.
 - `tipo_caso`: clasifica los casos según su consistencia intertemporal en los atributos sexo, edad y educación.
 
 En específico, nos quedaremos sólo con aquellos encuestados que respondieron en las cuatro olas de ELSOC (`tipo_atricion`=1) y eliminaremos de la muestra los casos con inconsistencias mayores (`tipo_caso`=2).
@@ -69,7 +69,9 @@ elsoc_wide <- elsoc_wide %>% dplyr::select(idencuesta, #identificador individual
                              c16_w01,c16_w02,c16_w03,c16_w04, #indentificación con partido político
                              c17_w01,c17_w02,c17_w03,c17_w04, #intentificación con coalición política
                              c28_w01,c28_w02,c28_w03,c28_w04, #de acuerdo con cambiar la constitución actual
-                             c05_08_w01,c05_08_w02,c05_08_w03,c05_08_w04) #confianza en el presidente
+                             c05_08_w01,c05_08_w02,c05_08_w03,c05_08_w04, #confianza en el presidente
+                             c05_02_w01,c05_02_w02,c05_02_w03,c05_02_w04, #confianza en partidos políticos
+                             c05_03_w01,c05_03_w02,c05_03_w03,c05_03_w04) #confianza en carabineros
                              
 ```
 
@@ -80,9 +82,7 @@ Antes de trasformar la base de datos de wide a long, se debe tener claro el nomb
 Estructura de la función long panel:
 
 <div class="alert alert-info">
-
-> [nueva bbdd long] <- long_panel(data = [bbdd wide], prefix = "[prefijo de la etiqueta]", begin = [etiqueta de la primera ola], end = [etiqueta de la última ola], label_location = "[ubicación de la ola en la etiqueta]", id = "[indentificador individual]", wave ="[nombre de la nueva variable asociada al periodo]").
-
+[nueva bbdd long] <- long_panel(data = [bbdd wide], prefix = "[prefijo de la etiqueta]", begin = [etiqueta de la primera ola], end = [etiqueta de la última ola], label_location = "[ubicación de la ola en la etiqueta]", id = "[indentificador individual]", wave ="[nombre de la nueva variable asociada al periodo]").
 </div>
 ```{r Transformar bbdd de wide a long}
 elsoc_long <- long_panel(data = elsoc_wide, #base de datos formato wide
@@ -105,7 +105,7 @@ elsoc_long <- na.omit(elsoc_long) #filtrar NA de la BBDD
 ```{r Recode de variables}
 
 #Recode VAR "ola" correspondiente a la ola de medición.
-elsoc_long$ola <- factor(elsoc_long$ola,levels=c("1","2","3","4"), labels = c('2016', '2017', '2018', '2019'))
+elsoc_long$ola <- factor(elsoc_long$ola,labels = c('2016', '2017', '2018', '2019'))
 elsoc_long$ola <- sjlabelled::set_label(elsoc_long$ola, label = c("Ola de Medición")) #etiquetamos variable
 
 #Recode VAR "m0_sexo" / rename "sexo"
@@ -162,9 +162,18 @@ elsoc_long$cambiar_consti <- sjlabelled::set_label(elsoc_long$cambiar_consti, la
 elsoc_long$conf_presi <- factor(elsoc_long$c05_08,labels = c('Nada', 'Poco', 'Algo', 'Bastante', 'Mucho'))
 elsoc_long$conf_presi <- sjlabelled::set_label(elsoc_long$conf_presi, label = c("Confianza en el Presidente")) #etiquetamos variable
 
+#Recode VAR "c05_02" confianza en partidos políticos / rename "conf_part"
+elsoc_long$conf_part <- factor(elsoc_long$c05_02,labels = c('Nada', 'Poco', 'Algo', 'Bastante', 'Mucho'))
+elsoc_long$conf_part <- sjlabelled::set_label(elsoc_long$conf_presi, label = c("Confianza en Partidos Políticos")) #etiquetamos variable
+
+#Recode VAR "c05_03" confianza en carabineros / rename "conf_carb"
+elsoc_long$conf_carb <- factor(elsoc_long$c05_03,labels = c('Nada', 'Poco', 'Algo', 'Bastante', 'Mucho'))
+elsoc_long$conf_carb <- sjlabelled::set_label(elsoc_long$conf_presi, label = c("Confianza en Carabineros")) #etiquetamos variable
+
 
 View(elsoc_long) #visualizamos la bbdd procesada con las variables incorporadas.
 ```
+
 
 ## F. Guardar base de datos formato R.Data (opcional)
 

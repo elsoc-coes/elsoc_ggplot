@@ -15,21 +15,19 @@ remove(list = ls())
 getwd()
 load("../1_input/data/elsoc_long.RData")
 ```
-#2.1 Alluvial para dos olas: identificación/no indentificación con partido o coalición política
-etiquetas.grafico2.1 <- datos2.1 %>% 
-    group_by(idnull, ola) %>% 
-    summarise(porcentaje = sum(porcentaje, na.rm = TRUE)) %>% 
-    mutate(idencuesta = 1)
-
-
 ```{r}
+elsoc_diseno <- svydesign(ids = ~idencuesta,strata = ~estrato,weights = ~ponderador02,nest = TRUE,data = elsoc_long)
+
+datos2.1 <- data.frame(prop.table((svytable(~idpart + ola,elsoc_diseno,round = T)))) 
+
+names(datos2.1)
+
 
 ```
 
 ```{r gráfico alluvial 2.1: idnull 2 olas}
-
-ggplot(datos2.1, aes(x = ola, fill = idnull, stratum = idnull, 
-               alluvium = idencuesta, y = porcentaje)) +
+ggplot(elsoc_long, aes(x = ola, fill = idpart, stratum = idpart, 
+               alluvium = idencuesta, y = Freq)) +
     ggalluvial::geom_flow(alpha = .66) + 
     ggalluvial::geom_stratum(linetype = 0) +
     scale_y_continuous(labels = scales::percent) + 
@@ -38,7 +36,7 @@ ggplot(datos2.1, aes(x = ola, fill = idnull, stratum = idnull,
     theme(legend.position = 'top',
           legend.title = element_blank()) +
     scale_fill_viridis_d(begin = 0, end = .85, direction = -1, option = 'viridis') +
-    geom_text(data = etiquetas.grafico2.1, 
+    geom_text(data = datos2.1, 
               aes(label = scales::percent(porcentaje, accuracy = .1)),
               position = position_stack(vjust = .5),
               show.legend = FALSE,
