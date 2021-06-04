@@ -133,6 +133,7 @@ View(elsoc_long)
 
 ### Uso de `survey`
 
+
 ## Visualización de datos
 
 ### Acerca de los plots básicos `ggplot2`

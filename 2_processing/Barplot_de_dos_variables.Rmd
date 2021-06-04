@@ -21,29 +21,16 @@ Sys.setlocale("LC_ALL","ES_ES.UTF-8") # para temas de caracteres en español, re
 ```
 
 ```{r library, include=FALSE}
-library(stringr)
-library(tidyverse)
-library(broom)
-library(cowplot)
-library(ggplot2)
+library(pacman)
+pacman::p_load(stringr,tidyverse,broom,cowplot,ggplot2,survey)
 ```
 
-```{r bbdd, include=FALSE}
-rm(list = ls())
-
-# BBDD LONG
-load("~/Desktop/ELSOC/dataverse_files/Datasets/ELSOC_Long_2016_2019_labelled_v2.00.RData")
-
-#BBDD WIDE
-load("~/Desktop/ELSOC/dataverse_files/Datasets/ELSOC_Wide_2016_2019_v1.00_R.RData")
-
-# Definir NA
-elsoc_long_2016_2019[elsoc_long_2016_2019==-999 | elsoc_long_2016_2019==-888] <- NA
-elsoc_wide_2016_2019[elsoc_wide_2016_2019 == -888 | elsoc_wide_2016_2019 == -999] <- NA
-
-#Label Olas
-elsoc_long_2016_2019$ola <- factor(elsoc_long_2016_2019$ola,labels = c('2016', '2017', '2018', '2019'))
+```{r Cargar BBDD}
+remove(list = ls())
+getwd()
+load("../1_input/data/elsoc_long.RData")
 ```
+
 
 En este instructivo aprenderá a realizar gráficos de barra simples para datos longitudinales. Esta sección elabora análisis para una sola variable categórica, la cual se puede agrupar por categoría según una variable a escoger.
 
