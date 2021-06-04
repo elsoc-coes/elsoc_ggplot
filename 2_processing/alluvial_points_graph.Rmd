@@ -13,21 +13,39 @@ pacman::p_load(stringr,tidyverse,broom,cowplot,ggplot2,survey)
 ```{r Cargar BBDD}
 remove(list = ls())
 getwd()
-load("../1_input/data/elsoc_long.RData")
+load("1_input/data/elsoc_long.RData")
+
+elsoc_diseno <- svydesign(ids = ~segmento, 
+                          strata = ~estrato, 
+                          weights = ~ponderador02, 
+                          nest = TRUE,
+                          data = elsoc_long)
 ```
+
 ```{r}
-elsoc_diseno <- svydesign(ids = ~idencuesta,strata = ~estrato,weights = ~ponderador02,nest = TRUE,data = elsoc_long)
+datos.grafico2.1 <- elsoc_long %>% 
+    dplyr::filter(!is.na(idpart)) %>%
+    dplyr::filter(!is.na(idcoal)) %>%
+    group_by(idencuesta,idpart,idcoal,ola) %>%
+    summarise(n1 = sum(ponderador02, na.rm = TRUE)) %>%
+    group_by(ola) %>%
+    mutate(n2 = sum(n1, na.rm = TRUE), porcentaje = n1/n2) %>%
+    ungroup()
 
-datos2.1 <- data.frame(prop.table((svytable(~idpart + ola,elsoc_diseno,round = T)))) 
+datos.grafico2.1$idnull <- factor(datos.grafico2.1$idpart == 'Ninguno' & datos.grafico2.1$idcoal == 'Ninguna',
+                               levels = c(FALSE, TRUE),
+                               labels = c('Se identifica con algun partido y/o coalicion politica', 'No se identifica con ningun partido ni coalicion politica'))
+  
 
-names(datos2.1)
-
-
+etiquetas.grafico2.1 <- datos.grafico2.1 %>% 
+    group_by(idnull,ola) %>% 
+    summarise(porcentaje = sum(porcentaje, na.rm = TRUE)) %>% 
+    mutate(idencuesta = 1)
 ```
 
 ```{r gráfico alluvial 2.1: idnull 2 olas}
-ggplot(elsoc_long, aes(x = ola, fill = idpart, stratum = idpart, 
-               alluvium = idencuesta, y = Freq)) +
+ggplot(datos.grafico2.1, aes(x = ola, fill = idnull, stratum = idnull, 
+               alluvium = idencuesta, y = porcentaje)) +
     ggalluvial::geom_flow(alpha = .66) + 
     ggalluvial::geom_stratum(linetype = 0) +
     scale_y_continuous(labels = scales::percent) + 
@@ -36,7 +54,7 @@ ggplot(elsoc_long, aes(x = ola, fill = idpart, stratum = idpart,
     theme(legend.position = 'top',
           legend.title = element_blank()) +
     scale_fill_viridis_d(begin = 0, end = .85, direction = -1, option = 'viridis') +
-    geom_text(data = datos2.1, 
+    geom_text(data = etiquetas.grafico2.1, 
               aes(label = scales::percent(porcentaje, accuracy = .1)),
               position = position_stack(vjust = .5),
               show.legend = FALSE,
@@ -45,12 +63,26 @@ ggplot(elsoc_long, aes(x = ola, fill = idpart, stratum = idpart,
     ggtitle('Cambio de frecuencias de indentificación con coalición política según año')
 ```
 
-#2.1 Alluvial para cuatro olas: identificación con coalición política
+#2.2 Alluvial para cuatro olas: identificación con coalición política
+
+```{r}
+datos.grafico2.2 <- elsoc_long %>% 
+  group_by(idencuesta,idcoal,ola) %>% 
+  summarise(n1=sum(ponderador02,na.rm=T)) %>% 
+  group_by(ola) %>%
+  mutate(n2 = sum(n1, na.rm = TRUE), porcentaje = n1/n2)%>% 
+  ungroup()
+
+etiquetas.grafico2.2 <- datos.grafico2.2 %>% 
+    group_by(idcoal,ola) %>% 
+    summarise(porcentaje = sum(porcentaje, na.rm = TRUE)) %>% 
+    mutate(idencuesta = 1)
+```
 
 
-```{r gráfíco alluvial 2.2: idpol 4 olas}
-ggplot(datos2.2, aes(x = ola, fill = idpol, stratum = idpol, 
-               alluvium = idencuesta, y = porcentaje)) +
+```{r gráfíco alluvial 2.2: idcoal 4 olas}
+ggplot(datos.grafico2.2, aes(x = ola, fill = idcoal, stratum = idcoal,
+                             alluvium = idencuesta, y = porcentaje)) +
     ggalluvial::geom_flow(alpha = .66) + 
     ggalluvial::geom_stratum(linetype = 0) +
     scale_y_continuous(labels = scales::percent) + 
@@ -70,8 +102,23 @@ ggplot(datos2.2, aes(x = ola, fill = idpol, stratum = idpol,
 
 #2.3 Alluvial para dos o más categorías: situación ocupacional
 
+```{r}
+datos.grafico2.3 <- elsoc_long %>% 
+    group_by(idencuesta,socup,sexo,ola) %>%
+    summarise(n1 = sum(ponderador02, na.rm = TRUE)) %>%
+    group_by(ola,sexo) %>%
+    mutate(n2 = sum(n1, na.rm = TRUE), porcentaje = n1/n2) %>%
+    ungroup()
+
+etiquetas.grafico2.3 <- datos.grafico2.3 %>% 
+    group_by(socup,ola, sexo) %>% 
+    summarise(porcentaje = sum(porcentaje, na.rm = TRUE)) %>% 
+    mutate(idencuesta = 1)
+```
+
+
 ```{r gráfico alluvial 2.3: socup por sexo}
-ggplot(datos2.3, aes(x = ola, fill = socup, stratum = socup, 
+ggplot(datos.grafico2.3, aes(x = ola, fill = socup, stratum = socup, 
                alluvium = idencuesta, y = porcentaje)) +
     ggalluvial::geom_flow(alpha = .66) + 
     ggalluvial::geom_stratum(linetype = 0) +
@@ -81,7 +128,7 @@ ggplot(datos2.3, aes(x = ola, fill = socup, stratum = socup,
     theme(legend.position = 'top',
           legend.title = element_blank()) +
     scale_fill_viridis_d(begin = 0, end = .85, direction = -1, option = 'viridis') +
-    facet_grid(.~m0_sexo)+
+    facet_wrap(.~sexo)+
     geom_text(data = etiquetas.grafico2.3, 
               aes(label = scales::percent(porcentaje, accuracy = .1)),
               position = position_stack(vjust = .5),
@@ -93,6 +140,20 @@ ggplot(datos2.3, aes(x = ola, fill = socup, stratum = socup,
 
 
 #3.1 Lineas y puntos 
+```{r}
+datos.grafico3.1 <- elsoc_long %>% 
+    group_by(idencuesta,cambiar_consti,ola) %>%
+    summarise(n1 = sum(ponderador02, na.rm = TRUE)) %>%
+    group_by(ola) %>%
+    mutate(n2 = sum(n1, na.rm = TRUE), porcentaje = n1/n2) %>%
+    ungroup()
+
+etiquetas.grafico3.1 <- datos.grafico3.1 %>% 
+    group_by(ola,cambiar_consti) %>% 
+    summarise(porcentaje = sum(porcentaje, na.rm = TRUE)) %>% 
+    mutate(idencuesta = 1)
+```
+
 
 ```{r}
 ggplot(etiquetas.grafico3.1,aes(y = porcentaje, x = ola, color = cambiar_consti, group = cambiar_consti,
@@ -100,7 +161,7 @@ ggplot(etiquetas.grafico3.1,aes(y = porcentaje, x = ola, color = cambiar_consti,
     geom_line(size = 1) +
     geom_point(size = 1.8) +
     scale_y_continuous(labels = scales::percent,
-                       limits = c(0, .4)) +
+                       limits = c(0, .8)) +
     ylab(label = NULL) +
     xlab(label = NULL) +
     scale_color_viridis_d(begin = .2, end = .5, direction = 1, option = 'viridis') +

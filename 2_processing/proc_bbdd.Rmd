@@ -174,7 +174,6 @@ elsoc_long$conf_carb <- sjlabelled::set_label(elsoc_long$conf_carb, label = c("C
 View(elsoc_long) #visualizamos la bbdd procesada con las variables incorporadas.
 ```
 
-
 ## F. Guardar base de datos formato R.Data (opcional)
 
 >save(elsoc_long, file "[ruta de carpeta local]/elsoc_long.RData")
