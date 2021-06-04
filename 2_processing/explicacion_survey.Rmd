@@ -53,7 +53,7 @@ datos.tabla <- data.frame(prop.table((svytable(~cambiar_consti + #variable de in
 
 head(datos.tabla)
 ```
-Si busco la frecuencia por año entonces:
+Si busco la frecuencia dentro de un año entonces:
 
 ```{r}
 a <- data.frame((svytable(~cambiar_consti + ola, elsoc_diseno, round = F)))

@@ -40,11 +40,11 @@ elsoc_diseno <- svydesign(ids = ~segmento,
                           data = elsoc_long)
 ```
 
-### Gráficos de barra
+### a. Gráficos de barra
 
-## Gráficos de barra que relacionan dos variables
+#### a.1 Gráficos de barra que relacionan dos variables
 
-En este instructivo aprenderá a realizar gráficos de barra simples para datos longitudinales. Esta sección elabora análisis para una sola variable categórica, la cual se puede agrupar bajo una variable categoría.
+En esta sección aprenderá a realizar gráficos de barra simples para datos longitudinales. Esta sección elabora análisis para una sola variable categórica, la cual se puede agrupar bajo una variable categoría.
 
 Paso 1: En caso de querer crear una variable nueva a partir de otras variables en el listado, debe realizarlo antes de los pasos a continuación.
 
@@ -74,7 +74,7 @@ Luego de hacer esos 3 pasos, se realizan 5 tipos de gráfico que relacionan dos 
 
 (2) Variable que agrupa (ej: ola, tramo de edad, sexo, ciudad, zona, etc..) *[VAR_Z]*
 
-### 1. Grafico de Barras con X = 'Categoría' 
+##### a.1.1 Grafico de Barras con X = 'Categoría' 
 ```{r bar_x_categoría, echo=TRUE}
 datos.grafico %>% 
     ggplot(aes(y = porcentaje, x = conf_presi, fill = ola, 
@@ -95,7 +95,7 @@ datos.grafico %>%
     ggtitle('Confianza en el Presidente(a) de la República según año')
 ```
 
-### 2.1. Grafico de Barras con X = 'Ola' - Dodge
+##### a.1.2 Grafico de Barras con X = 'Ola' - Dodge
 ```{r bar_x_ola_dodge, echo=TRUE}
 datos.grafico %>% 
   ggplot(aes(y = porcentaje, x = ola, fill = conf_presi, 
@@ -115,7 +115,7 @@ datos.grafico %>%
 ggtitle('Confianza en el Presidente(a) de la República según año')
 ```
 
-### 2.2. Grafico de Barras con X = 'Ola' - Stack
+##### a.1.3 Grafico de Barras con X = 'Ola' - Stack
 ```{r bar_x_ola_stack, echo=TRUE}
 datos.grafico %>% 
   ggplot(aes(y = porcentaje, x = ola, fill = conf_presi, 
@@ -136,7 +136,9 @@ datos.grafico %>%
   ggtitle('Confianza en el Presidente(a) de la República cada año')
 ```
 
-### 2.3 Dos categorías de agrupación: Edad y Ola
+#### a.1 Gráficos de barra que relacionan dos variables
+
+##### a.2.1 Dos categorías de agrupación: Edad y Ola
 ```{r}
 c <- data.frame(svytable(~conf_presi + ola + edad, elsoc_diseno, round = T))
 
@@ -154,7 +156,7 @@ datos.subset %>%
   theme_bw() + 
     geom_col(position = 'dodge2') +
     scale_y_continuous(labels = scales::percent,
-                       limits = c(0, 1)) +
+                       limits = c(0, 0.5)) +
     ylab(label = NULL) +
     xlab(label = NULL) +
     scale_fill_viridis_d(begin = .33, end = .66, direction = -1, option = 'viridis') +
@@ -167,7 +169,7 @@ datos.subset %>%
 ```
 
 
-### 3. Grafico de Barras con X = 'Categoría' en Ola = 'año'
+##### a.1.4 Grafico de Barras con X = 'Categoría' en Ola = 'año'
 ```{r bar_x_cat_por_ola, echo=TRUE}
 datos.subset <- droplevels(subset(datos.grafico, datos.grafico$ola == '2019'))
 
@@ -190,7 +192,7 @@ datos.subset %>%
 ```
 
 
-### 4. Grafico de Barras con X = 'Ola' en Categoría = 'Nada o Poco'
+##### a.1.6 Grafico de Barras con X = 'Ola' en Categoría = 'Nada o Poco'
 ```{r recode_categoria, include=FALSE}
 e <- data.frame(svytable(~conf_presi_rec + ola, elsoc_diseno, round = T))
 
