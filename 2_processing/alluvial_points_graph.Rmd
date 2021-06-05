@@ -4,84 +4,51 @@ author: "Cristóbal Ortiz"
 date: "28-05-2021"
 output: html_document
 ---
+```{r include=FALSE}
+knitr::opts_chunk$set(cache=FALSE, 
+                      warning = FALSE, 
+                      message = FALSE) 
+```
 
 ```{r library, include=FALSE}
-library(pacman)
+#library(pacman)
 pacman::p_load(stringr,tidyverse,broom,cowplot,ggplot2,survey)
 ```
 
-```{r Cargar BBDD}
-remove(list = ls())
+```{r include=FALSE}
 getwd()
-load("1_input/data/elsoc_long.RData")
-
-elsoc_diseno <- svydesign(ids = ~segmento, 
-                          strata = ~estrato, 
-                          weights = ~ponderador02, 
-                          nest = TRUE,
-                          data = elsoc_long)
+load("../1_input/data/elsoc_long.RData")
 ```
 
+
+### d. Gráficos Alluvial
+
+En esta sección aprenderá a realizar gráficos "alluvial" para datos longitudinales. Este tipo de gráfico permite visualizar los cambios en la distribución de frecuencias para variables categóricas a lo largo del tiempo. Previo a la visualización de este tipo de gráfico, se siguen dos pasos necesarios para la correcta especificación de variables, a saber: 
+
+**Paso 1**: Crear una base de datos que agrupa la frecuencia de la variables de interés por otra variable de agrupación (ej. `ola`).
+
+**Paso 2**: Crear una tabla que agrupa frecuencias en función de las categorías de respuesta tanto de la variable de interés como de la variable de agrupación (ej. `ola`)
+
+#### d.1 Alluvial para una variable en cuatro olas: identificación con coalición política.
+
 ```{r}
-datos.grafico2.1 <- elsoc_long %>% 
-    dplyr::filter(!is.na(idpart)) %>%
-    dplyr::filter(!is.na(idcoal)) %>%
-    group_by(idencuesta,idpart,idcoal,ola) %>%
-    summarise(n1 = sum(ponderador02, na.rm = TRUE)) %>%
+#Paso 1
+datos.grafico.d.1 <- elsoc_long %>%
+    group_by(idencuesta,ola,idcoal) %>% 
+    summarise(n1=sum(ponderador02,na.rm=T)) %>% 
     group_by(ola) %>%
-    mutate(n2 = sum(n1, na.rm = TRUE), porcentaje = n1/n2) %>%
+    mutate(n2 = sum(n1, na.rm = TRUE), porcentaje = n1/n2)%>% 
     ungroup()
 
-datos.grafico2.1$idnull <- factor(datos.grafico2.1$idpart == 'Ninguno' & datos.grafico2.1$idcoal == 'Ninguna',
-                               levels = c(FALSE, TRUE),
-                               labels = c('Se identifica con algun partido y/o coalicion politica', 'No se identifica con ningun partido ni coalicion politica'))
-  
-
-etiquetas.grafico2.1 <- datos.grafico2.1 %>% 
-    group_by(idnull,ola) %>% 
+#Paso 2
+etiquetas.grafico.d.1 <- datos.grafico.d.1 %>% 
+    group_by(ola,idcoal) %>% 
     summarise(porcentaje = sum(porcentaje, na.rm = TRUE)) %>% 
     mutate(idencuesta = 1)
 ```
 
-```{r gráfico alluvial 2.1: idnull 2 olas}
-ggplot(datos.grafico2.1, aes(x = ola, fill = idnull, stratum = idnull, 
-               alluvium = idencuesta, y = porcentaje)) +
-    ggalluvial::geom_flow(alpha = .66) + 
-    ggalluvial::geom_stratum(linetype = 0) +
-    scale_y_continuous(labels = scales::percent) + 
-    ylab(label = NULL) +
-    xlab(label = NULL) + 
-    theme(legend.position = 'top',
-          legend.title = element_blank()) +
-    scale_fill_viridis_d(begin = 0, end = .85, direction = -1, option = 'viridis') +
-    geom_text(data = etiquetas.grafico2.1, 
-              aes(label = scales::percent(porcentaje, accuracy = .1)),
-              position = position_stack(vjust = .5),
-              show.legend = FALSE,
-              size = 2.75,
-              color = rep('white')) +
-    ggtitle('Cambio de frecuencias de indentificación con coalición política según año')
-```
-
-#2.2 Alluvial para cuatro olas: identificación con coalición política
-
-```{r}
-datos.grafico2.2 <- elsoc_long %>% 
-  group_by(idencuesta,idcoal,ola) %>% 
-  summarise(n1=sum(ponderador02,na.rm=T)) %>% 
-  group_by(ola) %>%
-  mutate(n2 = sum(n1, na.rm = TRUE), porcentaje = n1/n2)%>% 
-  ungroup()
-
-etiquetas.grafico2.2 <- datos.grafico2.2 %>% 
-    group_by(idcoal,ola) %>% 
-    summarise(porcentaje = sum(porcentaje, na.rm = TRUE)) %>% 
-    mutate(idencuesta = 1)
-```
-
-
-```{r gráfíco alluvial 2.2: idcoal 4 olas}
-ggplot(datos.grafico2.2, aes(x = ola, fill = idcoal, stratum = idcoal,
+```{r gráfíco alluvial .d.1: idcoal 4 olas}
+d.1 <- ggplot(datos.grafico.d.1, aes(x = ola, fill = idcoal, stratum = idcoal,
                              alluvium = idencuesta, y = porcentaje)) +
     ggalluvial::geom_flow(alpha = .66) + 
     ggalluvial::geom_stratum(linetype = 0) +
@@ -91,34 +58,81 @@ ggplot(datos.grafico2.2, aes(x = ola, fill = idcoal, stratum = idcoal,
     theme(legend.position = 'top',
           legend.title = element_blank()) +
     scale_fill_viridis_d(begin = 0, end = .85, direction = -1, option = 'viridis') +
-    geom_text(data = etiquetas.grafico2.2, 
+    geom_text(data = etiquetas.grafico.d.1, 
               aes(label = scales::percent(porcentaje, accuracy = .1)),
               position = position_stack(vjust = .5),
               show.legend = FALSE,
               size = 2.75,
               color = rep('white'))+
   ggtitle('Cambio de frecuencias de indentificación con coalición política según año')
+
+d.1
 ```
 
-#2.3 Alluvial para dos o más categorías: situación ocupacional
+#### d.2 Alluvial para dos olas: identificación con coalición política.
+```{r}
+#Paso 1
+datos.grafico.d.2 <- elsoc_long %>% 
+    group_by(idencuesta,idcoal,ola) %>%
+    summarise(n1 = sum(ponderador02, na.rm = TRUE)) %>%
+    group_by(ola) %>%
+    mutate(n2 = sum(n1, na.rm = TRUE), porcentaje = n1/n2) %>%
+    ungroup()
+#Paso 1.1: crear un subset que incluya la frecuencia de la variable de interés sólo para los años 2017 y 2019
+datos.subset.d.2 <- droplevels(subset(datos.grafico.d.2, datos.grafico.d.2$ola == '2017' | datos.grafico.d.2$ola == '2019'))
+
+#Paso 2
+etiquetas.grafico.d.2 <- datos.subset.d.2 %>% 
+    group_by(idcoal,ola) %>% 
+    summarise(porcentaje = sum(porcentaje, na.rm = TRUE)) %>% 
+    mutate(idencuesta = 1)
+```
+
+```{r gráfico alluvial .d.2: idnull 2 olas}
+d.2 <- ggplot(datos.subset.d.2, aes(x = ola, fill = idcoal, stratum = idcoal, 
+               alluvium = idencuesta, y = porcentaje)) +
+    ggalluvial::geom_flow(alpha = .66) + 
+    ggalluvial::geom_stratum(linetype = 0) +
+    scale_y_continuous(labels = scales::percent) + 
+    ylab(label = NULL) +
+    xlab(label = NULL) + 
+    theme(legend.position = 'top',
+          legend.title = element_blank()) +
+    scale_fill_viridis_d(begin = 0, end = .85, direction = -1, option = 'viridis') +
+    geom_text(data = etiquetas.grafico.d.2, 
+              aes(label = scales::percent(porcentaje, accuracy = .1)),
+              position = position_stack(vjust = .5),
+              show.legend = FALSE,
+              size = 2.75,
+              color = rep('white')) +
+    ggtitle('Cambio de frecuencias de indentificación con coalición política según año')
+
+d.2
+```
+
+#### d.3 Alluvial para dos o más categorías: situación ocupacional
 
 ```{r}
-datos.grafico2.3 <- elsoc_long %>% 
+#Paso 1:
+datos.grafico.d.3 <- elsoc_long %>% 
     group_by(idencuesta,socup,sexo,ola) %>%
     summarise(n1 = sum(ponderador02, na.rm = TRUE)) %>%
     group_by(ola,sexo) %>%
     mutate(n2 = sum(n1, na.rm = TRUE), porcentaje = n1/n2) %>%
     ungroup()
+#Paso 1.1: crear un subset que incluya la frecuencia de la variable de interés sólo para los años 2017 y 2019
+datos.subset.d.3 <- droplevels(subset(datos.grafico.d.3, datos.grafico.d.3$ola == '2017' | datos.grafico.d.3$ola == '2019'))
 
-etiquetas.grafico2.3 <- datos.grafico2.3 %>% 
+#Paso 2: 
+etiquetas.grafico.d.3 <- datos.subset.d.3 %>% 
     group_by(socup,ola, sexo) %>% 
     summarise(porcentaje = sum(porcentaje, na.rm = TRUE)) %>% 
     mutate(idencuesta = 1)
 ```
 
 
-```{r gráfico alluvial 2.3: socup por sexo}
-ggplot(datos.grafico2.3, aes(x = ola, fill = socup, stratum = socup, 
+```{r gráfico alluvial .d.3: socup por sexo}
+d.3 <- ggplot(datos.subset.d.3, aes(x = ola, fill = socup, stratum = socup, 
                alluvium = idencuesta, y = porcentaje)) +
     ggalluvial::geom_flow(alpha = .66) + 
     ggalluvial::geom_stratum(linetype = 0) +
@@ -129,39 +143,51 @@ ggplot(datos.grafico2.3, aes(x = ola, fill = socup, stratum = socup,
           legend.title = element_blank()) +
     scale_fill_viridis_d(begin = 0, end = .85, direction = -1, option = 'viridis') +
     facet_wrap(.~sexo)+
-    geom_text(data = etiquetas.grafico2.3, 
+    geom_text(data = etiquetas.grafico.d.3, 
               aes(label = scales::percent(porcentaje, accuracy = .1)),
               position = position_stack(vjust = .5),
               show.legend = FALSE,
               size = 2.75,
               color = rep('white'))+
   ggtitle('Cambio de frecuencias en situación ocupacional para hombres y mujeres')
+
+d.3
 ```
 
+### Gráficos de lineas.
 
-#3.1 Lineas y puntos 
+En esta sección aprenderá a realizar gráficos de lineas y puntos para datos longitudinales. Este tipo de gráfico permite visualizar los cambios de frecuencia para variables categóricas a lo largo del tiempo. Al igual que la sección anterior, se siguen dos pasos necesarios para la correcta especificación de variables, a saber: 
+
+**Paso 1**: Crear una base de datos que agrupa la frecuencia de la variables de interés por otra variable de agrupación (ej. `ola`).
+
+**Paso 2**: Crear una tabla que agrupa frecuencias en función de las categorías de respuesta tanto de la variable de interés como de la variable de agrupación (ej. `ola`)
+
+#### e.1 Lineas y puntos para una variable.
+
 ```{r}
-datos.grafico3.1 <- elsoc_long %>% 
-    group_by(idencuesta,cambiar_consti,ola) %>%
+#Paso 1: 
+datos.grafico.e.1 <- elsoc_long %>% 
+    dplyr::filter(!is.na(conf_presi)) %>%
+    group_by(idencuesta,conf_presi,ola) %>%
     summarise(n1 = sum(ponderador02, na.rm = TRUE)) %>%
     group_by(ola) %>%
     mutate(n2 = sum(n1, na.rm = TRUE), porcentaje = n1/n2) %>%
     ungroup()
 
-etiquetas.grafico3.1 <- datos.grafico3.1 %>% 
-    group_by(ola,cambiar_consti) %>% 
+#Paso 2:
+etiquetas.grafico.e.1 <- datos.grafico.e.1 %>% 
+    group_by(conf_presi,ola) %>% 
     summarise(porcentaje = sum(porcentaje, na.rm = TRUE)) %>% 
     mutate(idencuesta = 1)
 ```
 
-
 ```{r}
-ggplot(etiquetas.grafico3.1,aes(y = porcentaje, x = ola, color = cambiar_consti, group = cambiar_consti,
+e.1 <- ggplot(etiquetas.grafico.e.1,aes(y = porcentaje, x = ola, color = conf_presi, group = conf_presi,
                label = as.character(scales::percent(porcentaje, accuracy = .1)))) +
     geom_line(size = 1) +
     geom_point(size = 1.8) +
     scale_y_continuous(labels = scales::percent,
-                       limits = c(0, .8)) +
+                       limits = c(0,.8)) +
     ylab(label = NULL) +
     xlab(label = NULL) +
     scale_color_viridis_d(begin = .2, end = .5, direction = 1, option = 'viridis') +
@@ -170,5 +196,100 @@ ggplot(etiquetas.grafico3.1,aes(y = porcentaje, x = ola, color = cambiar_consti,
     size= 2.75) +
     theme(legend.position = 'top',
           legend.title = element_blank())
+
+e.1
+```
+
+#### e.2 Lineas y puntos para más de una variable.
+
+```{r}
+#Paso 1:
+datos.grafico.e.2 <- elsoc_long %>% 
+    group_by(idencuesta,conf_presi,conf_part,conf_carb,ola) %>%
+    summarise(n1 = sum(ponderador02, na.rm = TRUE)) %>%
+    group_by(ola) %>%
+    mutate(n2 = sum(n1, na.rm = TRUE), porcentaje = n1/n2) %>%
+    ungroup()
+#Paso 1.1: creamos un subset con una nueva variables llamada "conf nada", que integra todas las respuesta "Nada" a la pregunta por la confianza en tres instituciones: presidente, partidos político y carabineros.
+datos.subset.e.2 <- datos.grafico.e.2 %>% 
+        pivot_longer(cols = starts_with('conf_'), names_to = 'conf_nada')
+#Paso 1.2: renombramos los valores de la variable "conf_nada". 
+datos.subset.e.2$conf_nada <- factor(datos.subset.e.2$conf_nada, 
+                            labels = c('Confianza en el Presidente', 'Confianza en Partidos Políticos', 
+                                       'Confianza en Carabineros'))
+#Paso 1.3: filtramos el subset a fin de dajer sólo las respuestas "Nada" de confianza en las tres instituciones mencionadas.
+datos.subset.e.2a <- droplevels(subset(datos.subset.e.2, value == 'Nada'))
+
+#Paso 2:
+etiquetas.grafico.e.2a <- datos.subset.e.2a %>% 
+    group_by(conf_nada,ola) %>% 
+    summarise(porcentaje = sum(porcentaje, na.rm = TRUE)) %>% 
+    mutate(idencuesta = 1) 
+```
+```{r}
+e.2 <- ggplot(etiquetas.grafico.e.2a,aes(y = porcentaje, x = ola, color = conf_nada, group = conf_nada,
+               label = as.character(scales::percent(porcentaje, accuracy = .1)))) +
+    geom_line(size = 1) +
+    geom_point(size = 1.8) +
+    scale_y_continuous(labels = scales::percent,
+                       limits = c(0,.8)) +
+    ylab(label = NULL) +
+    xlab(label = NULL) +
+    scale_color_viridis_d(begin = .2, end = .5, direction = 1, option = 'viridis') +
+    geom_text(vjust = -0.8,
+    posilinetion = position_dodge(width = .9),
+    size= 2.75) +
+    theme(legend.position = 'top',
+          legend.title = element_blank()) +
+    ggtitle('Cambio de frecuencias en el grado de confianza "Nada" en algunas instituciones')
+
+e.2
+```
+
+#### e.3 Lineas y puntos para una variables y más de una agrupación
+
+```{r}
+#Paso 1:
+datos.grafico.e.3 <- elsoc_long %>% 
+    group_by(idencuesta,conf_presi,conf_part,conf_carb,zona,ola) %>%
+    summarise(n1 = sum(ponderador02, na.rm = TRUE)) %>%
+    group_by(ola,zona) %>%
+    mutate(n2 = sum(n1, na.rm = TRUE), porcentaje = n1/n2) %>%
+    ungroup()
+#Paso 1.1
+datos.subset.e.3 <- datos.grafico.e.3 %>% 
+        pivot_longer(cols = starts_with('conf_'), names_to = 'conf_nada')
+#Paso 1.2
+datos.subset.e.3$conf_nada <- factor(datos.subset.e.2$conf_nada, 
+                            labels = c('Confianza en el Presidente', 'Confianza en Partidos Políticos', 
+                                       'Confianza en Carabineros'))
+#Paso 1.3
+datos.subset.e.3a <- droplevels(subset(datos.subset.e.3, value == 'Nada'))
+
+#Paso 2: 
+etiquetas.grafico.e.3a <- datos.subset.e.3a %>% 
+    group_by(conf_nada,ola,zona) %>% 
+    summarise(porcentaje = sum(porcentaje, na.rm = TRUE)) %>% 
+    mutate(idencuesta = 1) 
+```
+```{r}
+e.3 <- ggplot(etiquetas.grafico.e.3a,aes(y = porcentaje, x = ola, color = conf_nada, group = conf_nada,
+               label = as.character(scales::percent(porcentaje, accuracy = .1)))) +
+    geom_line(size = 1) +
+    geom_point(size = 1.8) +
+    scale_y_continuous(labels = scales::percent,
+                       limits = c(0,.9)) +
+    ylab(label = NULL) +
+    xlab(label = NULL) +
+    scale_color_viridis_d(begin = .2, end = .5, direction = 1, option = 'viridis') +
+    facet_wrap(.~zona)+
+    geom_text(vjust = -0.8,
+    posilinetion = position_dodge(width = .9),
+    size= 2.75) +
+    theme(legend.position = 'top',
+          legend.title = element_blank()) +
+    ggtitle('Cambio de frecuencias en el grado de confianza "Nada" en algunas instituciones')
+
+e.3
 ```
 

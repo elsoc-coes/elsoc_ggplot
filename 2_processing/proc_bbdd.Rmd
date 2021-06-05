@@ -179,5 +179,5 @@ View(elsoc_long) #visualizamos la bbdd procesada con las variables incorporadas.
 >save(elsoc_long, file "[ruta de carpeta local]/elsoc_long.RData")
 
 ```{r}
-save(elsoc_long,file = "../1_input/data/elsoc_long.RData")
+#save(elsoc_long,file = "../1_input/data/elsoc_long.RData")
 ```
