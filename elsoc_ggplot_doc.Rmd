@@ -916,7 +916,7 @@ d.2 <- ggplot(subset.d.2, aes(x = ola, fill = idcoal, stratum = idcoal,
 d.2
 ```
 
-```{r N9, include=FALSE}
+```{r N10, include=FALSE}
 N<-round(sum(subset.d.2$Freq),0)
 ```
 
@@ -970,7 +970,7 @@ d.3 <- ggplot(subset.d.3, aes(x = ola, fill = socup, stratum = socup,
 d.3
 ```
 
-```{r N10, include=FALSE}
+```{r N11, include=FALSE}
 N<-round(sum(subset.d.3$Freq),0)
 ```
 
@@ -985,76 +985,75 @@ En esta sección aprenderá a realizar gráficos de lineas y puntos para datos l
 **Paso 2**: Crear una tabla que agrupa frecuencias en función de las categorías de respuesta tanto de la variable de interés como de la variable de agrupación (ej. `ola`)
 
 #### e.1 Lineas y puntos para una variable.
-
 ```{r}
-#Paso 1: 
-datos.grafico.e.1 <- elsoc_long %>% 
-    dplyr::filter(!is.na(conf_presi)) %>%
-    group_by(idencuesta,conf_presi,ola) %>%
-    summarise(n1 = sum(ponderador02, na.rm = TRUE)) %>%
-    group_by(ola) %>%
-    mutate(n2 = sum(n1, na.rm = TRUE), porcentaje = n1/n2) %>%
-    ungroup()
-
-#Paso 2:
-etiquetas.grafico.e.1 <- datos.grafico.e.1 %>% 
-    group_by(conf_presi,ola) %>% 
-    summarise(porcentaje = sum(porcentaje, na.rm = TRUE)) %>% 
-    mutate(idencuesta = 1)
+#Paso 1
+a1 <- data.frame(svytable(~conf_presi + ola, elsoc_diseno, round = T))
+a2 <- a1 %>% group_by(ola) %>% transmute(porcentaje=Freq/sum(Freq)) 
+a2$ola <- NULL
+datos.e.1<- cbind(a1,a2)
 ```
 
-```{r}
-e.1 <- ggplot(etiquetas.grafico.e.1,aes(y = porcentaje, x = ola, color = conf_presi, group = conf_presi,
+```{r grafico-lineas-e.1}
+e.1 <- ggplot(datos.e.1,aes(y = porcentaje, x = ola, color = conf_presi, group = conf_presi,
                label = as.character(scales::percent(porcentaje, accuracy = .1)))) +
     geom_line(size = 1) +
     geom_point(size = 1.8) +
     scale_y_continuous(labels = scales::percent,
-                       limits = c(0,.8)) +
+                       limits = c(0,1)) +
     ylab(label = NULL) +
     xlab(label = NULL) +
     scale_color_viridis_d(begin = .2, end = .5, direction = 1, option = 'viridis') +
-    geom_text(vjust = -0.8,
+    geom_text(vjust = -1.5,
     posilinetion = position_dodge(width = .9),
-    size= 2.75) +
+    size= 2.25) + 
     theme(legend.position = 'top',
           legend.title = element_blank())
 
 e.1
 ```
 
+```{r N12, include=FALSE}
+N<-round(sum(datos.e.1$Freq),0)
+```
+
+Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
+
 #### e.2 Lineas y puntos para más de una variable.
 
 ```{r}
-#Paso 1:
-datos.grafico.e.2 <- elsoc_long %>% 
-    group_by(idencuesta,conf_presi,conf_part,conf_carb,ola) %>%
-    summarise(n1 = sum(ponderador02, na.rm = TRUE)) %>%
-    group_by(ola) %>%
-    mutate(n2 = sum(n1, na.rm = TRUE), porcentaje = n1/n2) %>%
-    ungroup()
-#Paso 1.1: creamos un subset con una nueva variables llamada "conf nada", que integra todas las respuesta "Nada" a la pregunta por la confianza en tres instituciones: presidente, partidos político y carabineros.
-datos.subset.e.2 <- datos.grafico.e.2 %>% 
-        pivot_longer(cols = starts_with('conf_'), names_to = 'conf_nada')
-#Paso 1.2: renombramos los valores de la variable "conf_nada". 
-datos.subset.e.2$conf_nada <- factor(datos.subset.e.2$conf_nada, 
-                            labels = c('Confianza en el Presidente', 'Confianza en Partidos Políticos', 
-                                       'Confianza en Carabineros'))
-#Paso 1.3: filtramos el subset a fin de dajer sólo las respuestas "Nada" de confianza en las tres instituciones mencionadas.
-datos.subset.e.2a <- droplevels(subset(datos.subset.e.2, value == 'Nada'))
+#Paso 1: Mismo código que gráfico c.2.3
+a <- data.frame(svytable(~conf_presi_rec + ola, elsoc_diseno, round = T))
+a1 <- a %>% group_by(ola) %>% transmute(p_presi=Freq/sum(Freq))
+b <- data.frame(svytable(~conf_part_rec + ola, elsoc_diseno, round = T))
+b1 <- b %>% group_by(ola) %>% transmute(p_part=Freq/sum(Freq))
+c <- data.frame(svytable(~conf_carb_rec + ola, elsoc_diseno, round = T))
+c1 <- c %>% group_by(ola) %>% transmute(p_carb=Freq/sum(Freq))
+datos.grafico.e.2<- cbind(a,a1,b,b1,c,c1)
 
-#Paso 2:
-etiquetas.grafico.e.2a <- datos.subset.e.2a %>% 
-    group_by(conf_nada,ola) %>% 
-    summarise(porcentaje = sum(porcentaje, na.rm = TRUE)) %>% 
-    mutate(idencuesta = 1) 
+#trasponer según variable
+datos.grafico <- datos.grafico.e.2 %>% 
+        pivot_longer(cols = starts_with('conf_'))  %>%
+        mutate(variable = factor(name,
+                             labels = c('Presidente/a de la Republica', 'Partidos Políticos', 
+                             'Carabineros de Chile'))) %>% 
+                                        drop_na()
+
+datos.grafico$porcentaje <- with(datos.grafico, case_when(
+  variable == 'Carabineros de Chile' ~ p_carb,
+  variable == 'Presidente/a de la Republica' ~ p_presi,
+  variable == 'Partidos Políticos' ~ p_part))
+
+#Paso 1.2: filtrar el subset manteniendo "Nada o Poco"
+subset.e.2 <- droplevels(subset(datos.grafico, value == 'Nada o Poco'))
 ```
-```{r}
-e.2 <- ggplot(etiquetas.grafico.e.2a,aes(y = porcentaje, x = ola, color = conf_nada, group = conf_nada,
+
+```{r grafico-lineas-e.2}
+e.2 <- ggplot(subset.e.2, aes(y = porcentaje, x = ola, color = variable, group = variable,
                label = as.character(scales::percent(porcentaje, accuracy = .1)))) +
     geom_line(size = 1) +
     geom_point(size = 1.8) +
     scale_y_continuous(labels = scales::percent,
-                       limits = c(0,.8)) +
+                       limits = c(0,1)) +
     ylab(label = NULL) +
     xlab(label = NULL) +
     scale_color_viridis_d(begin = .2, end = .5, direction = 1, option = 'viridis') +
@@ -1068,52 +1067,67 @@ e.2 <- ggplot(etiquetas.grafico.e.2a,aes(y = porcentaje, x = ola, color = conf_n
 e.2
 ```
 
-#### e.3 Lineas y puntos para una variables y más de una agrupación
-
-```{r}
-#Paso 1:
-datos.grafico.e.3 <- elsoc_long %>% 
-    group_by(idencuesta,conf_presi,conf_part,conf_carb,zona,ola) %>%
-    summarise(n1 = sum(ponderador02, na.rm = TRUE)) %>%
-    group_by(ola,zona) %>%
-    mutate(n2 = sum(n1, na.rm = TRUE), porcentaje = n1/n2) %>%
-    ungroup()
-#Paso 1.1
-datos.subset.e.3 <- datos.grafico.e.3 %>% 
-        pivot_longer(cols = starts_with('conf_'), names_to = 'conf_nada')
-#Paso 1.2
-datos.subset.e.3$conf_nada <- factor(datos.subset.e.2$conf_nada, 
-                            labels = c('Confianza en el Presidente', 'Confianza en Partidos Políticos', 
-                                       'Confianza en Carabineros'))
-#Paso 1.3
-datos.subset.e.3a <- droplevels(subset(datos.subset.e.3, value == 'Nada'))
-
-#Paso 2: 
-etiquetas.grafico.e.3a <- datos.subset.e.3a %>% 
-    group_by(conf_nada,ola,zona) %>% 
-    summarise(porcentaje = sum(porcentaje, na.rm = TRUE)) %>% 
-    mutate(idencuesta = 1) 
+```{r N13, include=FALSE}
+N<-round(sum(subset.e.2$Freq),0)
 ```
+
+Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
+
+
+#### e.3 Lineas y puntos para una variables y más de una agrupación
 ```{r}
-e.3 <- ggplot(etiquetas.grafico.e.3a,aes(y = porcentaje, x = ola, color = conf_nada, group = conf_nada,
+#Paso 1: Mismo código que gráfico c.2.3
+a <- data.frame(svytable(~conf_presi_rec + ola + zona, elsoc_diseno, round = T))
+a1 <- a %>% group_by(ola, zona) %>% transmute(p_presi=Freq/sum(Freq))
+b <- data.frame(svytable(~conf_part_rec + ola + zona, elsoc_diseno, round = T))
+b1 <- b %>% group_by(ola, zona) %>% transmute(p_part=Freq/sum(Freq))
+c <- data.frame(svytable(~conf_carb_rec + ola + zona, elsoc_diseno, round = T))
+c1 <- c %>% group_by(ola, zona) %>% transmute(p_carb=Freq/sum(Freq))
+datos.grafico.e.3<- cbind(a,a1,b,b1,c,c1)
+
+#trasponer según variable
+datos.grafico <- datos.grafico.e.3 %>% 
+        pivot_longer(cols = starts_with('conf_'))  %>%
+        mutate(variable = factor(name,
+                             labels = c('Presidente/a de la Republica', 'Partidos Políticos', 
+                             'Carabineros de Chile'))) %>% 
+                                        drop_na()
+
+datos.grafico$porcentaje <- with(datos.grafico, case_when(
+  variable == 'Carabineros de Chile' ~ p_carb,
+  variable == 'Presidente/a de la Republica' ~ p_presi,
+  variable == 'Partidos Políticos' ~ p_part))
+
+#Paso 1.2: filtrar el subset manteniendo "Nada o Poco"
+subset.e.3 <- droplevels(subset(datos.grafico, value == 'Nada o Poco'))
+```
+
+```{r grafico-linea-e.3}
+e.3 <- ggplot(subset.e.3,aes(y = porcentaje, x = ola, color = variable, group = variable,
                label = as.character(scales::percent(porcentaje, accuracy = .1)))) +
     geom_line(size = 1) +
     geom_point(size = 1.8) +
     scale_y_continuous(labels = scales::percent,
-                       limits = c(0,.9)) +
+                       limits = c(0,1)) +
     ylab(label = NULL) +
     xlab(label = NULL) +
     scale_color_viridis_d(begin = .2, end = .5, direction = 1, option = 'viridis') +
     facet_wrap(.~zona)+
     geom_text(vjust = -0.8,
     posilinetion = position_dodge(width = .9),
-    size= 2.75) +
+    size= 1.75) +
     theme(legend.position = 'top',
           legend.title = element_blank()) +
     ggtitle('Cambio de frecuencias en el grado de confianza "Nada" en algunas instituciones')
 
 e.3
 ```
+
+```{r N14, include=FALSE}
+N<-round(sum(subset.e.3$Freq),0)
+```
+
+Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
 
 ## 3. Literatura Relevante {#literatura}
 
