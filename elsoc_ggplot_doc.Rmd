@@ -831,6 +831,7 @@ a2 <- a1 %>% group_by(ola) %>% transmute(porcentaje=Freq/sum(Freq))
 a2$ola <- NULL
 datos.d.1<- cbind(a1,a2)
 
+#Paso 2
 b1 <- data.frame(svytable(~idcoal + ola, elsoc_diseno, round = T))
 b2 <- b1 %>% 
   group_by(ola) %>% 
@@ -852,37 +853,49 @@ d.1 <- ggplot(datos.d.1, aes(x = ola, fill = idcoal, stratum = idcoal,
           legend.title = element_blank()) +
     scale_fill_viridis_d(begin = 0, end = .85, direction = -1, option = 'viridis') +
     geom_text(data = etiquetas.d.1, 
-              aes(label = scales::percent(porcentaje, accuracy = .1)),
+              aes(label = ifelse(porcentaje > 0.03 , scales::percent(porcentaje, accuracy = .1),"")),
               position = position_stack(vjust = .5),
               show.legend = FALSE,
-              size = 1.75,
+              size = 2,
               color = rep('white'))+
   ggtitle('Cambio de frecuencias de indentificación con coalición política según año')
 
 d.1
 ```
 
+```{r N9, include=FALSE}
+N<-round(sum(datos.d.1$Freq),0)
+```
+
+Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
+
 #### d.2 Alluvial para dos olas: identificación con coalición política.
 ```{r}
 #Paso 1
-datos.grafico.d.2 <- elsoc_long %>% 
-    group_by(idencuesta,idcoal,ola) %>%
-    summarise(n1 = sum(ponderador02, na.rm = TRUE)) %>%
-    group_by(ola) %>%
-    mutate(n2 = sum(n1, na.rm = TRUE), porcentaje = n1/n2) %>%
-    ungroup()
-#Paso 1.1: crear un subset que incluya la frecuencia de la variable de interés sólo para los años 2017 y 2019
-datos.subset.d.2 <- droplevels(subset(datos.grafico.d.2, datos.grafico.d.2$ola == '2017' | datos.grafico.d.2$ola == '2019'))
+a1 <- data.frame(svytable(~idcoal + ola + idencuesta, elsoc_diseno, round = T))
+a1 <- a1 %>% dplyr::filter(Freq==1)
+a2 <- a1 %>% group_by(ola) %>% transmute(porcentaje=Freq/sum(Freq)) 
+a2$ola <- NULL
+datos.d.2<- cbind(a1,a2)
+
+#Paso 1.1: crear un subset sólo para los años 2017 y 2019
+subset.d.2 <- droplevels(subset(datos.d.2, datos.d.2$ola == '2017' | datos.d.2$ola == '2019'))
 
 #Paso 2
-etiquetas.grafico.d.2 <- datos.subset.d.2 %>% 
-    group_by(idcoal,ola) %>% 
-    summarise(porcentaje = sum(porcentaje, na.rm = TRUE)) %>% 
-    mutate(idencuesta = 1)
+b1 <- data.frame(svytable(~idcoal + ola, elsoc_diseno, round = T))
+b2 <- b1 %>% 
+  group_by(ola) %>% 
+  transmute(porcentaje=Freq/sum(Freq)) %>% 
+  mutate(idencuesta = 1)
+b2$ola <- NULL
+etiquetas.d.2<- cbind(b1,b2)
+
+#Paso 2.2: crear un subset sólo para los años 2017 y 2019
+etiquetas.d.2 <- droplevels(subset(etiquetas.d.2, etiquetas.d.2$ola == '2017' | etiquetas.d.2$ola == '2019'))
 ```
 
 ```{r gráfico alluvial .d.2: idnull 2 olas}
-d.2 <- ggplot(datos.subset.d.2, aes(x = ola, fill = idcoal, stratum = idcoal, 
+d.2 <- ggplot(subset.d.2, aes(x = ola, fill = idcoal, stratum = idcoal, 
                alluvium = idencuesta, y = porcentaje)) +
     ggalluvial::geom_flow(alpha = .66) + 
     ggalluvial::geom_stratum(linetype = 0) +
@@ -892,8 +905,8 @@ d.2 <- ggplot(datos.subset.d.2, aes(x = ola, fill = idcoal, stratum = idcoal,
     theme(legend.position = 'top',
           legend.title = element_blank()) +
     scale_fill_viridis_d(begin = 0, end = .85, direction = -1, option = 'viridis') +
-    geom_text(data = etiquetas.grafico.d.2, 
-              aes(label = scales::percent(porcentaje, accuracy = .1)),
+    geom_text(data = etiquetas.d.2, 
+              aes(label = ifelse(porcentaje > 0.03 , scales::percent(porcentaje, accuracy = .1),"")),
               position = position_stack(vjust = .5),
               show.legend = FALSE,
               size = 2.75,
@@ -903,29 +916,39 @@ d.2 <- ggplot(datos.subset.d.2, aes(x = ola, fill = idcoal, stratum = idcoal,
 d.2
 ```
 
-#### d.3 Alluvial para dos o más categorías: situación ocupacional
-
-```{r}
-#Paso 1:
-datos.grafico.d.3 <- elsoc_long %>% 
-    group_by(idencuesta,socup,sexo,ola) %>%
-    summarise(n1 = sum(ponderador02, na.rm = TRUE)) %>%
-    group_by(ola,sexo) %>%
-    mutate(n2 = sum(n1, na.rm = TRUE), porcentaje = n1/n2) %>%
-    ungroup()
-#Paso 1.1: crear un subset que incluya la frecuencia de la variable de interés sólo para los años 2017 y 2019
-datos.subset.d.3 <- droplevels(subset(datos.grafico.d.3, datos.grafico.d.3$ola == '2017' | datos.grafico.d.3$ola == '2019'))
-
-#Paso 2: 
-etiquetas.grafico.d.3 <- datos.subset.d.3 %>% 
-    group_by(socup,ola, sexo) %>% 
-    summarise(porcentaje = sum(porcentaje, na.rm = TRUE)) %>% 
-    mutate(idencuesta = 1)
+```{r N9, include=FALSE}
+N<-round(sum(subset.d.2$Freq),0)
 ```
 
+Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
+
+#### d.3 Alluvial para dos o más categorías: situación ocupacional
+```{r}
+#Paso 1
+a1 <- data.frame(svytable(~idcoal + ola + idencuesta + socup + sexo, elsoc_diseno, round = T))
+a1 <- a1 %>% dplyr::filter(Freq==1)
+a2 <- a1 %>% group_by(ola) %>% transmute(porcentaje=Freq/sum(Freq)) 
+a2$ola <- NULL
+datos.d.3<- cbind(a1,a2)
+
+#Paso 1.1: crear un subset sólo para los años 2017 y 2019
+subset.d.3 <- droplevels(subset(datos.d.3, datos.d.3$ola == '2017' | datos.d.3$ola == '2019'))
+
+#Paso 2
+b1 <- data.frame(svytable(~idcoal + ola + socup + sexo, elsoc_diseno, round = T))
+b2 <- b1 %>% 
+  group_by(ola) %>% 
+  transmute(porcentaje=Freq/sum(Freq)) %>% 
+  mutate(idencuesta = 1)
+b2$ola <- NULL
+etiquetas.d.3<- cbind(b1,b2)
+
+#Paso 2.2: crear un subset sólo para los años 2017 y 2019
+etiquetas.d.3 <- droplevels(subset(etiquetas.d.3, etiquetas.d.3$ola == '2017' | etiquetas.d.3$ola == '2019'))
+```
 
 ```{r gráfico alluvial .d.3: socup por sexo}
-d.3 <- ggplot(datos.subset.d.3, aes(x = ola, fill = socup, stratum = socup, 
+d.3 <- ggplot(subset.d.3, aes(x = ola, fill = socup, stratum = socup, 
                alluvium = idencuesta, y = porcentaje)) +
     ggalluvial::geom_flow(alpha = .66) + 
     ggalluvial::geom_stratum(linetype = 0) +
@@ -936,8 +959,8 @@ d.3 <- ggplot(datos.subset.d.3, aes(x = ola, fill = socup, stratum = socup,
           legend.title = element_blank()) +
     scale_fill_viridis_d(begin = 0, end = .85, direction = -1, option = 'viridis') +
     facet_wrap(.~sexo)+
-    geom_text(data = etiquetas.grafico.d.3, 
-              aes(label = scales::percent(porcentaje, accuracy = .1)),
+    geom_text(data = etiquetas.d.3, 
+              aes(label = ifelse(porcentaje > 0.05 , scales::percent(porcentaje, accuracy = .1),"")),
               position = position_stack(vjust = .5),
               show.legend = FALSE,
               size = 2.75,
@@ -947,6 +970,11 @@ d.3 <- ggplot(datos.subset.d.3, aes(x = ola, fill = socup, stratum = socup,
 d.3
 ```
 
+```{r N10, include=FALSE}
+N<-round(sum(subset.d.3$Freq),0)
+```
+
+Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
 
 ### Gráficos de lineas
 
