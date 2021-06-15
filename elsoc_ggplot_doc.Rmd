@@ -34,6 +34,10 @@ En lo que sigue se especifican los pasos a seguir para obtener una base de datos
 ### a. Cargar librerías
 
 ```{r Cargar librerías, echo=TRUE}
+#"pacman" es una herramienta de administración de paquetes R. Se utiliza el comando "p_load"
+#para instalar los paquetes que no se encuentran descargados y cargar los paquetes que se
+#deseen utilizar, ahorrando lineas de escritura.
+
 #install.packages("pacman")
 library(pacman)
 pacman::p_load(car,dplyr,panelr,stringr,tidyverse,ggplot2,survey)
@@ -150,81 +154,53 @@ sum(is.na(elsoc_long)) #indica cantidad de NA
 
 A continuación, se recodificarán las categorías de respuesta y se etiquetarán las variables seleccionadas.
 
-* Recode variable "ola" correspondiente a la ola de medición.
+
 
 ```{r Recode de var "ola"}
-
+#Recode variable "ola" correspondiente a la ola de medición.
 elsoc_long$ola <- factor(elsoc_long$ola,labels = c('2016', '2017', '2018', '2019'))
 elsoc_long$ola <- sjlabelled::set_label(elsoc_long$ola, label = c("Ola de Medición"))
                   #etiquetamos variable
-```
 
-* Recode variable "m0_sexo" / rename "sexo".
-
-```{r Recode de var "sexo"}
-
+#Recode variable "m0_sexo" / rename "sexo".
 elsoc_long$sexo <- factor(elsoc_long$m0_sexo,labels = c('Hombre', 'Mujer'))
 elsoc_long$sexo <- sjlabelled::set_label(elsoc_long$sexo, label = c("Tipo de sexo")) 
                    #etiquetamos variable
-```
 
-* Recode variable "m0_edad" / rename "edad"
-
-```{r Recode de var "edad"}
- 
+#Recode variable "m0_edad" / rename "edad"
 elsoc_long$edad <- factor(car::recode(elsoc_long$m0_edad, "18:29=1;30:49=2;50:64=3;65:150=4"),
                            labels = c('18-29', '30-49', '50-64', '65 o más'))
 elsoc_long$edad <- sjlabelled::set_label(elsoc_long$edad, label = c("Edad en Tramos")) 
                   #etiquetamos variable
-```
 
-* Recode variable "m01" nivel educacional / rename "educacion"
-
-```{r Recode de var "educacion"}
-
+#Recode variable "m01" nivel educacional / rename "educacion"
 elsoc_long$educacion <- car::recode(elsoc_long$m01,"c(1,2,3)=1;c(4,5)=2;c(6,7)=3;c(8,9,10)=4")
 elsoc_long$educacion <- factor(elsoc_long$educacion,labels = c("Basica","Media","Tecnica","Universitaria"))
 elsoc_long$educacion <- sjlabelled::set_label(elsoc_long$educacion, label = c("Nivel Educacional"))     
                                               #etiquetamos variable
-```
 
-* Recode variable "d01_01" estatus social subjetivo / raneme "estatus".
-
-```{r Recode de var "estatus"}
-
+#Recode variable "d01_01" estatus social subjetivo / raneme "estatus".
 elsoc_long$estatus<- factor(car::recode(elsoc_long$d01_01, "0:4=1;5=2;6:10=3"),
                           labels = c('Bajo','Medio','Alto'))
 elsoc_long$estatus <- sjlabelled::set_label(elsoc_long$estatus, label = c("Estatus Social Subjetivo")) 
                       #etiquetamos variable
-```
 
-* Recode variable "m02" situación ocupacional / rename "socup".
-
-```{r Recode de var "socup"}
-
+#Recode variable "m02" situación ocupacional / rename "socup".
 elsoc_long$socup <- factor(car::recode(elsoc_long$m02,"c(1,2,3) = 1; 7 = 2; 6 = 3; 5 = 4; c(4, 8, 9) = 5"),
                            labels = c("Trabajo remunerado", "Trabajo doméstico no remunerado", 
                                       "Desempleado/a", "Jubilado/a o pensionado/a", 
                                       "Otras categorías"))
 elsoc_long$socup <- sjlabelled::set_label(elsoc_long$socup, label = c("Situación Ocupacional")) 
                     #etiquetamos variable
-```
 
-* Recode variable "estrato" que refiere al tipo de ciudad / rename "tipo de ciudad"
-
-```{r Recode de var "tipo de ciudad"}
-
+#Recode variable "estrato" que refiere al tipo de ciudad / rename "tipo de ciudad"
 elsoc_long$tipo_ciudad <- factor(elsoc_long$estrato, labels = c('Gran Santiago', 'Gran Valparaíso', 'Gran 
                                                                 Concepción', 'Ciudades grandes', 'Ciudades 
                                                                 medianas', 'Ciudades pequeñas'))
 elsoc_long$tipo_ciudad <- sjlabelled::set_label(elsoc_long$estrato, label = c("Tipo de ciudad")) 
                           #etiquetamos variable
-```
 
-* Recode variable "region" correspondiente a regiones del país/ raname "zona" relativa a macrozona geográfica.
-
-```{r Recode de var "zona"}
-
+#Recode variable "region" correspondiente a regiones del país/ raname "zona" relativa a macrozona geográfica.
 elsoc_long$zona  <- car::recode(elsoc_long$region,
                                 "c('Tarapaca','Antofagasta','Atacama','Coquimbo','Arica')=1;
                                 c('Valparaiso','Lib. Gral. B. Ohiggins','B. Ohiggins', 'Maule','Bio Bio')=2;
@@ -234,35 +210,23 @@ elsoc_long$zona  <- factor(elsoc_long$zona,levels=c("1","2","3","4"), labels =
                                 c("Norte","Centro","Sur","Metropolitana"))
 elsoc_long$zona <- sjlabelled::set_label(elsoc_long$zona, label = c("Zona Geográfica")) 
                    #etiquetamos variable
-```
 
-* Recode "c16" identificación con partidos políticos / rename "idpart".
-
-```{r Recode de var "idpart"}
-
+#Recode "c16" identificación con partidos políticos / rename "idpart".
 elsoc_long$idpart <- factor(elsoc_long$c16,labels = 
                             c('PC','PH','RD','PRO','EVO','PPD','AMP','PDC','PRI','RN','UDI','PS','PRDS',
                               'Otro','Ninguno'))
 elsoc_long$idpart <- sjlabelled::set_label(elsoc_long$idpart, label = 
                                              c("Indentificación con Partido Político")) 
                      #etiquetamos variable
-```
 
-* Recode "c17" indentifiación con colación política /rename "idcoal".
-
-```{r Recode de var "idcoal"}
-
+#Recode "c17" indentifiación con colación política /rename "idcoal".
 elsoc_long$idcoal <- factor(elsoc_long$c17, labels = c('Chile Vamos','Nueva Mayoría','Frente Amplio', 
                                                        'Otra','Ninguna'))
 elsoc_long$idcoal <- sjlabelled::set_label(elsoc_long$idcoal, label = 
                                              c("Indentificación con Coalición Política")) 
                     #etiquetamos variable
-```
 
-* Recode "c28" grado de acuerdo con cambiar constitución / rename "cambiar_consti".
-
-```{r Recode de var "cambiar_consti"}
-
+#Recode "c28" grado de acuerdo con cambiar constitución / rename "cambiar_consti".
 elsoc_long$cambiar_consti <- factor(car::recode(elsoc_long$c28, "c(1,2)=1;c(3)=2;c(4,5)=3"))
 elsoc_long$cambiar_consti <- factor(elsoc_long$cambiar_consti, 
                             labels = c('En desacuendo o totalmente en desacuerdo', 'Ni de acuerdo ni en 
@@ -270,36 +234,29 @@ elsoc_long$cambiar_consti <- factor(elsoc_long$cambiar_consti,
 elsoc_long$cambiar_consti <- sjlabelled::set_label(elsoc_long$cambiar_consti, label = 
                                                      c("Grado de Acuerdo con Cambiar Constitución"))       
                               #etiquetamos variable
-```
 
-* Recode "c05_08" confianza en el presidente / rename "conf_presi".
-
-```{r Recode de var "conf_presi"}
-
+#Recode "c05_08" confianza en el presidente / rename "conf_presi".
 elsoc_long$conf_presi <- factor(elsoc_long$c05_08,labels = c('Nada', 'Poco', 'Algo', 'Bastante', 'Mucho'))
 elsoc_long$conf_presi <- sjlabelled::set_label(elsoc_long$conf_presi, label = c("Confianza en el 
                                                                                 Presidente"))
                         #etiquetamos variable
-```
 
-* Recode "c05_02" confianza en partidos políticos / rename "conf_part".
-
-```{r Recode de var "conf_part"}
-
+#Recode "c05_02" confianza en partidos políticos / rename "conf_part".
 elsoc_long$conf_part <- factor(elsoc_long$c05_02,labels = c('Nada', 'Poco', 'Algo', 'Bastante', 'Mucho'))
 elsoc_long$conf_part <- sjlabelled::set_label(elsoc_long$conf_part, label = 
                                                 c("Confianza en Partidos Políticos")) 
                         #etiquetamos variable
-```
 
-* Recode "c05_03" confianza en carabineros / rename "conf_carb".
-
-```{r Recode de var "conf_carb"}
+#Recode "c05_03" confianza en carabineros / rename "conf_carb".
 elsoc_long$conf_carb <- factor(elsoc_long$c05_03,labels = c('Nada', 'Poco', 'Algo', 'Bastante', 'Mucho'))
 elsoc_long$conf_carb <- sjlabelled::set_label(elsoc_long$conf_carb, label = 
                                                 c("Confianza en Carabineros"))   
                         #etiquetamos variable
+
+
+
 ```
+
 ```{r visualizar bbdd procesada}
 #Visualizar la bbdd procesada con las variables incorporadas
 
@@ -725,27 +682,18 @@ Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
 
 El último gráfico muestra el cambio de la percepción del estatus social a lo largo del tiempo. Lo interesante de este gráfico es la posibilidad de agrupar años para una mejor y más clara visualización. Este tipo de gráficos se puede utilizar si es que se quiere percibir cambios a nivel macro de alguna variable.
 
-* Recolectar variables a utilizar
 
 ```{r recodificar varibales}
-
+#Recolectar variables a utilizar
 datos.grafico3 <- data.frame(cbind(elsoc_long$idencuesta, elsoc_long$ola,elsoc_long$estatus, 
                                    elsoc_long$ponderador02))
 colnames(datos.grafico3) <- c("idencuesta", "ola", "estatus", "ponderador02")
-```
 
-* Pasar tabla de long a wide
-
-```{r long a wide}
-
+#Pasar tabla de long a wide
 datos.grafico3 <- panel_data(datos.grafico3, id = idencuesta, wave = ola)
 datos.wide <- widen_panel(datos.grafico3, separator = "_")
-```
 
-* Recodificar cambios
-
-```{r recodificar cambios}
-
+#Recodificar cambios
 datos.wide$cambio_estatus_4 <- factor(with(datos.wide, case_when(
     estatus_4 == estatus_3 & !is.na(estatus_4) & !is.na(estatus_3) ~ 2,
     estatus_4 > estatus_3  & !is.na(estatus_4) & !is.na(estatus_3) ~ 1,
@@ -761,12 +709,8 @@ datos.wide$cambio_estatus_2 <- factor(with(datos.wide, case_when(
     estatus_2 > estatus_1  & !is.na(estatus_2) & !is.na(estatus_1) ~ 1,
     estatus_2 < estatus_1  & !is.na(estatus_2) & !is.na(estatus_1) ~ 3)),
     labels = c('Aumenta', 'Se mantiene', 'Disminuye'))
-```
 
-*Debido a la complejidad de agregar los ponderadores a partir del diseño encuesta, se realiza un ajuste manual con el ponderador06 del año 2016.
-
-```{r Agregar ponderadores}
-
+#Debido a la complejidad de agregar los ponderadores a partir del diseño encuesta, se realiza un ajuste manual con el ponderador06 del año 2016.
 datos.grafico <- datos.wide %>% 
   pivot_longer(cols = c(cambio_estatus_2,cambio_estatus_3,cambio_estatus_4), names_to = "cambio_estatus", 
                values_to = "respuesta") %>% 
@@ -775,20 +719,17 @@ datos.grafico <- datos.wide %>%
                summarise(n1=sum(ponderador02_1,na.rm=T)) %>% 
                mutate(n2 = sum(n1, na.rm = TRUE), porcentaje = n1/n2)%>% 
                ungroup()
-```
 
-* Recodificamos los periodos de cambio
-
-```{r recodificar periodos de cambio}
-
+#Recodificamos los periodos de cambio
 datos.grafico$cambio_estatus<- car::recode(datos.grafico$cambio_estatus, 
                            "'cambio_estatus_2'='2016-2017';'cambio_estatus_3'='2017-2018';
                            'cambio_estatus_4'='2018-2019'")
+
 ```
 
-* Finalmente, crear el gráfico.
 
 ```{r crear ggplot}
+#Creamos el gráfico
 
 c.2.4 <-ggplot(datos.grafico, aes(y=porcentaje, x=cambio_estatus,fill=respuesta ,label = 
                                     as.character(scales::percent(porcentaje, accuracy = .1))))+
@@ -814,7 +755,7 @@ N<-round(sum(datos.grafico$Freq),0)
 
 Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
 
-### Gráficos "Alluvial"
+### d. Gráficos "Alluvial"
 En esta sección aprenderá a realizar gráficos "alluvial" para datos longitudinales. Este tipo de gráfico permite visualizar los cambios en la distribución de frecuencias para variables categóricas a lo largo del tiempo. Previo a la visualización de este tipo de gráfico, se siguen dos pasos necesarios para la correcta especificación de variables, a saber: 
 
 **Paso 1**: Crear una base de datos que agrupa la frecuencia de la variables de interés por otra variable de agrupación (ej. `ola`).
@@ -976,7 +917,7 @@ N<-round(sum(subset.d.3$Freq),0)
 
 Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
 
-### Gráficos de lineas
+### e. Gráficos de lineas
 
 En esta sección aprenderá a realizar gráficos de lineas y puntos para datos longitudinales. Este tipo de gráfico permite visualizar los cambios de frecuencia para variables categóricas a lo largo del tiempo. Al igual que la sección anterior, se siguen dos pasos necesarios para la correcta especificación de variables, a saber: 
 
@@ -1131,5 +1072,6 @@ Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
 
 ## 3. Literatura Relevante {#literatura}
 
-[Data Visualization: A practical introduction (Healy, 2018)](https://socviz.co/?fbclid=IwAR2Y6epYvtWSrE9sLk5wVBJopYoh4YXKM2FkNdfMCYBuaH6hYntXM-Ep6Ec)
-[Data Visualization with R (Kabacoff, 2020)](https://rkabacoff.github.io/datavis/)
+Healy, K. (2018). *Data Visualization: A practical introduction*. Recuperado de: [https://socviz.co/?fbclid=IwAR2Y6epYvtWSrE9sLk5wVBJopYoh4YXKM2FkNdfMCYBuaH6hYntXM-Ep6Ec](https://socviz.co/?fbclid=IwAR2Y6epYvtWSrE9sLk5wVBJopYoh4YXKM2FkNdfMCYBuaH6hYntXM-Ep6Ec)
+
+Kabacoff, R. (2020). *Data Visualization with R*. Recuperado de: [https://rkabacoff.github.io/datavis/](https://rkabacoff.github.io/datavis/)
