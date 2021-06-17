@@ -40,19 +40,23 @@ En lo que sigue se especifican los pasos a seguir para obtener una base de datos
 
 #install.packages("pacman")
 library(pacman)
-pacman::p_load(car,dplyr,panelr,stringr,tidyverse,ggplot2,survey)
+pacman::p_load(car,dplyr,panelr,stringr,tidyverse,ggplot2,survey,ggrepel)
 remove(list = ls()) #limpieza del entorno de trabajo
 options(scipen=999) #evita notación científica
 ```
 
 ### b. Cargar base de datos desde repositorio en Dataverse 
-
-```{r Cargar bbdd desde url}
-load(url("https://dataverse.harvard.edu/api/access/datafile/4606527")) #cargar bbdd desde url oficial alojado en dataverse
-
+1. Si quiere manualmente descargar en la base de datos desde la url oficial alojado en Dataverse puede ingresar al siguiente [link](https://dataverse.harvard.edu/dataverse/coes_data_repository)
+```{r Cargar bbdd desde archivo}
 # Para cargar la bbdd desde un archivo que fue manualmente descargado:
 #getwd()
 #load("C:/Users/.../ELSOC_Wide_2016_2019_Merge_v1.00_R.RData")
+```
+
+
+2. Si quiere automaticamente utilizar la base de datos desde el url en forma directa siga el código siguiente.
+```{r Cargar bbdd desde url}
+load(url("https://dataverse.harvard.edu/api/access/datafile/4606527")) #cargar bbdd desde url oficial alojado en dataverse
 ```
 
 ### c. Selección de variables y filtrado de datos
@@ -293,7 +297,7 @@ Se muestra un ejemplo de tabla ponderada con la variable de interés: `cambiar_c
 datos.tabla <- data.frame(prop.table((svytable(~cambiar_consti + #variable de intrés
                                                  ola, #variable de agrupación (puede ser más de una)
                                                elsoc_diseno, #diseño muestral
-                                               round = T #redondear cifras
+                                               round = F #redondear cifras
                                                )))) 
 ```
 
@@ -533,7 +537,7 @@ Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
 En el gráfico se puede ver la comparación etaria respecto a la confianza al presidente de la república, según año. Este gráfico es muy útil para la comparación y análisis dentro de ciertas categorías de agrupación (within).
 
 ```{r edad_ola}
-a1 <- data.frame(svytable(~conf_presi + ola + edad, elsoc_diseno, round = T))
+a1 <- data.frame(svytable(~conf_presi + ola + edad, elsoc_diseno, round = F))
 a2 <- a1 %>% group_by(edad, ola) %>% transmute(porcentaje=Freq/sum(Freq)) 
 a2$edad <- NULL
 a2$ola <- NULL
@@ -567,7 +571,7 @@ Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
 El gráfico anterior es complejo debido a la cantidad de información que contiene, por lo que se elabora una simplificación de lo anterior (revisar literatura relevante para la visualización de datos)
 
 ```{r}
-a1 <- data.frame(svytable(~conf_presi_rec + ola + edad, elsoc_diseno, round = T))
+a1 <- data.frame(svytable(~conf_presi_rec + ola + edad, elsoc_diseno, round = F))
 a2 <- a1 %>% group_by(edad, ola) %>% transmute(porcentaje=Freq/sum(Freq)) 
 a2$edad <- NULL
 a2$ola <- NULL
@@ -629,11 +633,11 @@ elsoc_diseno <- svydesign(ids = ~segmento, strata = ~estrato, weights = ~pondera
 
 Luego se realiza las tablas de porcentajes y se trasponen por cada variable.
 ```{r tres_var_ola}
-a <- data.frame(svytable(~conf_presi_rec + ola, elsoc_diseno, round = T))
+a <- data.frame(svytable(~conf_presi_rec + ola, elsoc_diseno, round = F))
 a1 <- a %>% group_by(ola) %>% transmute(p_presi=Freq/sum(Freq))
-b <- data.frame(svytable(~conf_part_rec + ola, elsoc_diseno, round = T))
+b <- data.frame(svytable(~conf_part_rec + ola, elsoc_diseno, round = F))
 b1 <- b %>% group_by(ola) %>% transmute(p_part=Freq/sum(Freq))
-c <- data.frame(svytable(~conf_carb_rec + ola, elsoc_diseno, round = T))
+c <- data.frame(svytable(~conf_carb_rec + ola, elsoc_diseno, round = F))
 c1 <- c %>% group_by(ola) %>% transmute(p_carb=Freq/sum(Freq))
 datos.grafico2<- cbind(a,a1,b,b1,c,c1)
 
@@ -674,6 +678,7 @@ c.2.3
 
 ```{r N7, include=FALSE}
 N<-round(sum(datos.grafico$Freq),0)
+N<-(N/3)
 ```
 
 Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
@@ -750,7 +755,7 @@ c.2.4 <-ggplot(datos.grafico, aes(y=porcentaje, x=cambio_estatus,fill=respuesta 
 c.2.4
 ```
 ```{r N8, include=FALSE}
-N<-round(sum(datos.grafico$Freq),0)
+N<-round(sum(datos.grafico$n1),0)
 ```
 
 Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
@@ -928,7 +933,7 @@ En esta sección aprenderá a realizar gráficos de lineas y puntos para datos l
 #### e.1 Lineas y puntos para una variable.
 ```{r}
 #Paso 1
-a1 <- data.frame(svytable(~conf_presi + ola, elsoc_diseno, round = T))
+a1 <- data.frame(svytable(~conf_presi + ola, elsoc_diseno, round = F))
 a2 <- a1 %>% group_by(ola) %>% transmute(porcentaje=Freq/sum(Freq)) 
 a2$ola <- NULL
 datos.e.1<- cbind(a1,a2)
@@ -943,9 +948,8 @@ e.1 <- ggplot(datos.e.1,aes(y = porcentaje, x = ola, color = conf_presi, group =
                        limits = c(0,1)) +
     ylab(label = NULL) +
     xlab(label = NULL) +
-    scale_color_viridis_d(begin = .2, end = .5, direction = 1, option = 'viridis') +
-    geom_text(vjust = -1.5,
-    posilinetion = position_dodge(width = .9),
+    scale_color_viridis_d(begin = .3, end = .8, direction = 1, option = 'viridis') +
+    geom_text_repel(posilinetion = position_dodge(width = .9),
     size= 2.25) + 
     theme(legend.position = 'top',
           legend.title = element_blank())
@@ -963,11 +967,11 @@ Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
 
 ```{r}
 #Paso 1: Mismo código que gráfico c.2.3
-a <- data.frame(svytable(~conf_presi_rec + ola, elsoc_diseno, round = T))
+a <- data.frame(svytable(~conf_presi_rec + ola, elsoc_diseno, round = F))
 a1 <- a %>% group_by(ola) %>% transmute(p_presi=Freq/sum(Freq))
-b <- data.frame(svytable(~conf_part_rec + ola, elsoc_diseno, round = T))
+b <- data.frame(svytable(~conf_part_rec + ola, elsoc_diseno, round = F))
 b1 <- b %>% group_by(ola) %>% transmute(p_part=Freq/sum(Freq))
-c <- data.frame(svytable(~conf_carb_rec + ola, elsoc_diseno, round = T))
+c <- data.frame(svytable(~conf_carb_rec + ola, elsoc_diseno, round = F))
 c1 <- c %>% group_by(ola) %>% transmute(p_carb=Freq/sum(Freq))
 datos.grafico.e.2<- cbind(a,a1,b,b1,c,c1)
 
@@ -997,7 +1001,7 @@ e.2 <- ggplot(subset.e.2, aes(y = porcentaje, x = ola, color = variable, group =
                        limits = c(0,1)) +
     ylab(label = NULL) +
     xlab(label = NULL) +
-    scale_color_viridis_d(begin = .2, end = .5, direction = 1, option = 'viridis') +
+    scale_color_viridis_d(begin = .2, end = .7, direction = 1, option = 'viridis') +
     geom_text(vjust = -0.8,
     posilinetion = position_dodge(width = .9),
     size= 2.75) +
@@ -1010,6 +1014,7 @@ e.2
 
 ```{r N13, include=FALSE}
 N<-round(sum(subset.e.2$Freq),0)
+N<-(N/3)
 ```
 
 Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
@@ -1018,11 +1023,11 @@ Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
 #### e.3 Lineas y puntos para una variables y más de una agrupación
 ```{r}
 #Paso 1: Mismo código que gráfico c.2.3
-a <- data.frame(svytable(~conf_presi_rec + ola + zona, elsoc_diseno, round = T))
+a <- data.frame(svytable(~conf_presi_rec + ola + zona, elsoc_diseno, round = F))
 a1 <- a %>% group_by(ola, zona) %>% transmute(p_presi=Freq/sum(Freq))
-b <- data.frame(svytable(~conf_part_rec + ola + zona, elsoc_diseno, round = T))
+b <- data.frame(svytable(~conf_part_rec + ola + zona, elsoc_diseno, round = F))
 b1 <- b %>% group_by(ola, zona) %>% transmute(p_part=Freq/sum(Freq))
-c <- data.frame(svytable(~conf_carb_rec + ola + zona, elsoc_diseno, round = T))
+c <- data.frame(svytable(~conf_carb_rec + ola + zona, elsoc_diseno, round = F))
 c1 <- c %>% group_by(ola, zona) %>% transmute(p_carb=Freq/sum(Freq))
 datos.grafico.e.3<- cbind(a,a1,b,b1,c,c1)
 
@@ -1052,7 +1057,7 @@ e.3 <- ggplot(subset.e.3,aes(y = porcentaje, x = ola, color = variable, group = 
                        limits = c(0,1)) +
     ylab(label = NULL) +
     xlab(label = NULL) +
-    scale_color_viridis_d(begin = .2, end = .5, direction = 1, option = 'viridis') +
+    scale_color_viridis_d(begin = .2, end = .7, direction = 1, option = 'viridis') +
     facet_wrap(.~zona)+
     geom_text(vjust = -0.8,
     posilinetion = position_dodge(width = .9),
@@ -1066,6 +1071,7 @@ e.3
 
 ```{r N14, include=FALSE}
 N<-round(sum(subset.e.3$Freq),0)
+N<-(N/3)
 ```
 
 Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
