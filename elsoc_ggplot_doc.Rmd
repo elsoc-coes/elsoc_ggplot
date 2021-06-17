@@ -771,11 +771,12 @@ En esta sección aprenderá a realizar gráficos "alluvial" para datos longitudi
 
 ```{r}
 #Paso 1
-a1 <- data.frame(svytable(~idcoal + ola + idencuesta, elsoc_diseno, round = T))
-a1 <- a1 %>% dplyr::filter(Freq==1)
+a1 <- data.frame(svytable(~idcoal + ola + idencuesta, elsoc_diseno, round = F))
+a1 <- a1 %>% dplyr::filter(Freq>0)
 a2 <- a1 %>% group_by(ola) %>% transmute(porcentaje=Freq/sum(Freq)) 
 a2$ola <- NULL
 datos.d.1<- cbind(a1,a2)
+datos.d.1 <- na.omit(datos.d.1)
 
 #Paso 2
 b1 <- data.frame(svytable(~idcoal + ola, elsoc_diseno, round = T))
@@ -785,6 +786,7 @@ b2 <- b1 %>%
   mutate(idencuesta = 1)
 b2$ola <- NULL
 etiquetas.d.1<- cbind(b1,b2)
+etiquetas.d.1 <- na.omit(etiquetas.d.1)
 ```
 
 ```{r gráfíco alluvial .d.1: idcoal 4 olas}
@@ -819,10 +821,11 @@ Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
 ```{r}
 #Paso 1
 a1 <- data.frame(svytable(~idcoal + ola + idencuesta, elsoc_diseno, round = T))
-a1 <- a1 %>% dplyr::filter(Freq==1)
+a1 <- a1 %>% dplyr::filter(Freq>0)
 a2 <- a1 %>% group_by(ola) %>% transmute(porcentaje=Freq/sum(Freq)) 
 a2$ola <- NULL
 datos.d.2<- cbind(a1,a2)
+datos.d.2 <- na.omit(datos.d.2)
 
 #Paso 1.1: crear un subset sólo para los años 2017 y 2019
 subset.d.2 <- droplevels(subset(datos.d.2, datos.d.2$ola == '2017' | datos.d.2$ola == '2019'))
@@ -835,6 +838,7 @@ b2 <- b1 %>%
   mutate(idencuesta = 1)
 b2$ola <- NULL
 etiquetas.d.2<- cbind(b1,b2)
+etiquetas.d.2 <- na.omit(etiquetas.d.2)
 
 #Paso 2.2: crear un subset sólo para los años 2017 y 2019
 etiquetas.d.2 <- droplevels(subset(etiquetas.d.2, etiquetas.d.2$ola == '2017' | etiquetas.d.2$ola == '2019'))
@@ -872,10 +876,11 @@ Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
 ```{r}
 #Paso 1
 a1 <- data.frame(svytable(~idcoal + ola + idencuesta + socup + sexo, elsoc_diseno, round = T))
-a1 <- a1 %>% dplyr::filter(Freq==1)
+a1 <- a1 %>% dplyr::filter(Freq>0)
 a2 <- a1 %>% group_by(ola) %>% transmute(porcentaje=Freq/sum(Freq)) 
 a2$ola <- NULL
 datos.d.3<- cbind(a1,a2)
+datos.d.3 <- na.omit(datos.d.3)
 
 #Paso 1.1: crear un subset sólo para los años 2017 y 2019
 subset.d.3 <- droplevels(subset(datos.d.3, datos.d.3$ola == '2017' | datos.d.3$ola == '2019'))
@@ -888,6 +893,7 @@ b2 <- b1 %>%
   mutate(idencuesta = 1)
 b2$ola <- NULL
 etiquetas.d.3<- cbind(b1,b2)
+etiquetas.d.3 <- na.omit(etiquetas.d.3)
 
 #Paso 2.2: crear un subset sólo para los años 2017 y 2019
 etiquetas.d.3 <- droplevels(subset(etiquetas.d.3, etiquetas.d.3$ola == '2017' | etiquetas.d.3$ola == '2019'))
