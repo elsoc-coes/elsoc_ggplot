@@ -779,7 +779,7 @@ datos.d.1<- cbind(a1,a2)
 datos.d.1 <- na.omit(datos.d.1)
 
 #Paso 2
-b1 <- data.frame(svytable(~idcoal + ola, elsoc_diseno, round = T))
+b1 <- data.frame(svytable(~idcoal + ola, elsoc_diseno, round = F))
 b2 <- b1 %>% 
   group_by(ola) %>% 
   transmute(porcentaje=Freq/sum(Freq)) %>% 
@@ -820,7 +820,7 @@ Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
 #### d.2 Alluvial para dos olas: identificación con coalición política.
 ```{r}
 #Paso 1
-a1 <- data.frame(svytable(~idcoal + ola + idencuesta, elsoc_diseno, round = T))
+a1 <- data.frame(svytable(~idcoal + ola + idencuesta, elsoc_diseno, round = F))
 a1 <- a1 %>% dplyr::filter(Freq>0)
 a2 <- a1 %>% group_by(ola) %>% transmute(porcentaje=Freq/sum(Freq)) 
 a2$ola <- NULL
@@ -831,7 +831,7 @@ datos.d.2 <- na.omit(datos.d.2)
 subset.d.2 <- droplevels(subset(datos.d.2, datos.d.2$ola == '2017' | datos.d.2$ola == '2019'))
 
 #Paso 2
-b1 <- data.frame(svytable(~idcoal + ola, elsoc_diseno, round = T))
+b1 <- data.frame(svytable(~idcoal + ola, elsoc_diseno, round = F))
 b2 <- b1 %>% 
   group_by(ola) %>% 
   transmute(porcentaje=Freq/sum(Freq)) %>% 
@@ -875,7 +875,7 @@ Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
 #### d.3 Alluvial para dos o más categorías: situación ocupacional
 ```{r}
 #Paso 1
-a1 <- data.frame(svytable(~idcoal + ola + idencuesta + socup + sexo, elsoc_diseno, round = T))
+a1 <- data.frame(svytable(~idcoal + ola + idencuesta + socup + sexo, elsoc_diseno, round = F))
 a1 <- a1 %>% dplyr::filter(Freq>0)
 a2 <- a1 %>% group_by(ola) %>% transmute(porcentaje=Freq/sum(Freq)) 
 a2$ola <- NULL
@@ -886,7 +886,7 @@ datos.d.3 <- na.omit(datos.d.3)
 subset.d.3 <- droplevels(subset(datos.d.3, datos.d.3$ola == '2017' | datos.d.3$ola == '2019'))
 
 #Paso 2
-b1 <- data.frame(svytable(~idcoal + ola + socup + sexo, elsoc_diseno, round = T))
+b1 <- data.frame(svytable(~idcoal + ola + socup + sexo, elsoc_diseno, round = F))
 b2 <- b1 %>% 
   group_by(ola) %>% 
   transmute(porcentaje=Freq/sum(Freq)) %>% 
