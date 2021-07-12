@@ -305,14 +305,9 @@ datos.tabla <- data.frame(prop.table((svytable(~cambiar_consti + #variable de in
 A partir de la tabla anterior no es intuitiva la interpretación de los porcentajes obtenidos. Para encontrar las frecuencias de las categorías dentro de cada año de análisis entonces se realiza la siguiente tabla:
 
 ```{r datos tabla complejo, echo=TRUE}
-#Crear tabla que agrupa las frecuencias por cada respuesta
-a <- data.frame((svytable(~cambiar_consti + ola, elsoc_diseno, round = F))) 
-#Crear tabla que agrupa las frecuencias dentro de cada año
-b <- a %>% group_by(ola) %>% transmute(porcentaje=Freq/sum(Freq)) 
-#Quitar variables repetidas
-b$ola <- NULL
-#Unir las dos tablas creadas anteriormente
-datos.grafico<- cbind(a,b)
+#Crear tabla que agrupa las frecuencias por cada respuesta y agrupa las frecuencias dentro de cada año
+datos.grafico <- data.frame((svytable(~cambiar_consti + ola, elsoc_diseno, round = F))) %>% group_by(ola) %>% mutate(porcentaje=Freq/sum(Freq))
+
 #Verificar que en cada año las respuestas suman 100%
 head(datos.grafico)
 ```
@@ -754,10 +749,10 @@ En esta sección aprenderá a realizar gráficos "alluvial" para datos longitudi
 
 ```{r}
 #Paso 1
-datos.d1 <- data.frame((svytable(~idcoal + ola + idencuesta, elsoc_diseno, round = F))) %>% dplyr::filter(Freq>0)  %>% group_by(ola) %>% mutate(porcentaje=Freq/sum(Freq)) %>% na.omit()
+datos.d.1 <- data.frame((svytable(~idcoal + ola + idencuesta, elsoc_diseno, round = F))) %>% dplyr::filter(Freq>0)  %>% group_by(ola) %>% mutate(porcentaje=Freq/sum(Freq)) %>% na.omit()
 
 #Paso 2
-etiquetas.d1 <- data.frame((svytable(~idcoal + ola, elsoc_diseno, round = F))) %>% group_by(ola) %>% mutate(porcentaje=Freq/sum(Freq)) %>% na.omit() %>% 
+etiquetas.d.1 <- data.frame((svytable(~idcoal + ola, elsoc_diseno, round = F))) %>% group_by(ola) %>% mutate(porcentaje=Freq/sum(Freq)) %>% na.omit() %>% 
   mutate(idencuesta = 1)
 ```
 
@@ -792,13 +787,13 @@ Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
 #### d.2 Alluvial para dos olas: identificación con coalición política.
 ```{r}
 #Paso 1
-datos.d2 <- data.frame((svytable(~idcoal + ola + idencuesta, elsoc_diseno, round = F))) %>% dplyr::filter(Freq>0)  %>% group_by(ola) %>% mutate(porcentaje=Freq/sum(Freq)) %>% na.omit()
+datos.d.2 <- data.frame((svytable(~idcoal + ola + idencuesta, elsoc_diseno, round = F))) %>% dplyr::filter(Freq>0)  %>% group_by(ola) %>% mutate(porcentaje=Freq/sum(Freq)) %>% na.omit()
 
 #Paso 1.1: crear un subset sólo para los años 2017 y 2019
 subset.d.2 <- droplevels(subset(datos.d.2, datos.d.2$ola == '2017' | datos.d.2$ola == '2019'))
 
 #Paso 2
-etiquetas.d2 <- data.frame((svytable(~idcoal + ola, elsoc_diseno, round = F))) %>% group_by(ola) %>% mutate(porcentaje=Freq/sum(Freq)) %>% na.omit() %>% 
+etiquetas.d.2 <- data.frame((svytable(~idcoal + ola, elsoc_diseno, round = F))) %>% group_by(ola) %>% mutate(porcentaje=Freq/sum(Freq)) %>% na.omit() %>% 
   mutate(idencuesta = 1)
 
 #Paso 2.2: crear un subset sólo para los años 2017 y 2019
@@ -836,13 +831,13 @@ Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
 #### d.3 Alluvial para dos o más categorías: situación ocupacional
 ```{r}
 #Paso 1
-datos.d3 <- data.frame((svytable(~idcoal + ola + idencuesta + socup + sexo, elsoc_diseno, round = F))) %>% dplyr::filter(Freq>0)  %>% group_by(ola) %>% mutate(porcentaje=Freq/sum(Freq)) %>% na.omit()
+datos.d.3 <- data.frame((svytable(~idcoal + ola + idencuesta + socup + sexo, elsoc_diseno, round = F))) %>% dplyr::filter(Freq>0)  %>% group_by(ola) %>% mutate(porcentaje=Freq/sum(Freq)) %>% na.omit()
 
 #Paso 1.1: crear un subset sólo para los años 2017 y 2019
 subset.d.3 <- droplevels(subset(datos.d.3, datos.d.3$ola == '2017' | datos.d.3$ola == '2019'))
 
 #Paso 2
-etiquetas.d3 <- data.frame((svytable(~idcoal + ola + socup + sexo, elsoc_diseno, round = F))) %>% group_by(ola) %>% mutate(porcentaje=Freq/sum(Freq)) %>% na.omit() %>% 
+etiquetas.d.3 <- data.frame((svytable(~idcoal + ola + socup + sexo, elsoc_diseno, round = F))) %>% group_by(ola) %>% mutate(porcentaje=Freq/sum(Freq)) %>% na.omit() %>% 
   mutate(idencuesta = 1)
 
 #Paso 2.2: crear un subset sólo para los años 2017 y 2019
@@ -889,7 +884,7 @@ En esta sección aprenderá a realizar gráficos de lineas y puntos para datos l
 #### e.1 Lineas y puntos para una variable.
 ```{r}
 #Paso 1
-datos.e1 <- data.frame((svytable(~conf_presi + ola, elsoc_diseno, round = F))) %>% group_by(ola) %>% mutate(p_carb=Freq/sum(Freq))
+datos.e.1 <- data.frame((svytable(~conf_presi + ola, elsoc_diseno, round = F))) %>% group_by(ola) %>% mutate(porcentaje=Freq/sum(Freq))
 ```
 
 ```{r grafico-lineas-e.1}
@@ -980,8 +975,10 @@ Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
 #Paso 1: Mismo código que gráfico c.2.3
 datos.presi <- data.frame((svytable(~conf_presi_rec + ola + zona, elsoc_diseno, round = F))) %>% group_by(ola, zona) %>% mutate(p_presi=Freq/sum(Freq))
 datos.presi$ola <- NULL
+datos.presi$zona <- NULL
 datos.part <- data.frame((svytable(~conf_part_rec + ola + zona, elsoc_diseno, round = F))) %>% group_by(ola, zona) %>% mutate(p_part=Freq/sum(Freq))
 datos.part$ola <- NULL
+datos.presi$zona <- NULL
 datos.carb <- data.frame((svytable(~conf_carb_rec + ola + zona, elsoc_diseno, round = F))) %>% group_by(ola, zona) %>% mutate(p_carb=Freq/sum(Freq))
 
 datos.grafico.e.3<- cbind(datos.presi, datos.part, datos.carb)
