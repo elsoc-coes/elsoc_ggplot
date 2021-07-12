@@ -337,7 +337,7 @@ A continuación especificaremos las herramientas de ggplot más comunes con su r
 
 * Themes [`theme`]: Controla la visualización de todos los elementos gráficos, a excepción de los datos. 
 
-En las siguientes secciones se elaboran algunos de los gráficos más comunes para presentar data cualitativa y cuantitativa para encuestas longitudinales. Se recomienda revisar literatura relevante para la visualización de datos (disponible en [sección 3](#literatura)) para representar graficamente la información y datos en forma óptima.
+En las siguientes secciones se elaboran algunos de los gráficos más comunes para presentar data cualitativa y cuantitativa para encuestas longitudinales. Se recomienda revisar Revisar capitulo 1 de [Healy (2019)](#literatura), o capítulo 10 de [Irizarry (2021)](#literatura) para representar graficamente la información y datos en forma óptima.
 
 ### c. Gráficos de barra
 
@@ -353,10 +353,8 @@ En esta sección aprenderá a realizar gráficos de barra simples para datos lon
 
 ```{r tabla_datos_gráfico, echo=TRUE}
 #Ejemplo: [VARIABLE = conf_presi] y [VAR_Z = ola]
-a <- data.frame((svytable(~conf_presi + ola, elsoc_diseno, round = F)))
-b <- a %>% group_by(ola) %>% transmute(porcentaje=Freq/sum(Freq)) 
-b$ola <- NULL
-datos.grafico<- cbind(a,b)
+datos.grafico <- data.frame((svytable(~conf_presi + ola, elsoc_diseno, round = F))) %>%
+  group_by(ola) %>% mutate(porcentaje=Freq/sum(Freq))
 ```
 
 **Paso 3**: Revisar la tabla recién creada: columnas y datos
@@ -393,7 +391,7 @@ c.1.1 <-datos.grafico %>%
     ylab(label = NULL) +
     xlab(label = NULL) +
     #colores oficiales por ola: degradé 'viridis'
-    scale_fill_viridis_d(begin = .33, end = .66, direction = -1, option = 'viridis') +
+    scale_fill_viridis_d(begin = 0, end = .85, direction = -1, option = 'viridis') +
     #etiquetas por sobre cada barra
     geom_text(vjust = -0.8,
               position = position_dodge(width = .9),
@@ -462,7 +460,7 @@ c.1.3 <- datos.subset %>%
                        limits = c(0, 1)) +
     ylab(label = NULL) +
     xlab(label = NULL) +
-    scale_fill_viridis_d(begin = .33, end = .66, direction = -1, option = 'viridis') +
+    scale_fill_viridis_d(begin = 0, end = .85, direction = -1, option = 'viridis') +
     geom_text(vjust = -0.8,
               position = position_dodge(width = .9),
               size= 2.75) +
@@ -496,10 +494,7 @@ elsoc_long$conf_presi_rec <- factor(elsoc_long$conf_presi_rec,labels = c('Nada o
 elsoc_diseno <- svydesign(ids = ~segmento, strata = ~estrato, weights = ~ponderador02,nest = TRUE, data = elsoc_long)
 
 #crear tabla para el gráfico
-a <- data.frame((svytable(~conf_presi_rec + ola, elsoc_diseno, round = F)))
-b <- a %>% group_by(ola) %>% transmute(porcentaje=Freq/sum(Freq)) 
-b$ola <- NULL
-datos.grafico<- cbind(a,b)
+datos.grafico <- data.frame((svytable(~conf_presi_rec + ola, elsoc_diseno, round = F))) %>% group_by(ola) %>% mutate(porcentaje=Freq/sum(Freq))
 ```
 
 (2) crear gráfico apilado (Stack)
@@ -513,7 +508,7 @@ c.1.4 <-datos.grafico %>%
                      limits = c(0, 1)) +
   ylab(label = NULL) +
   xlab(label = NULL) +
-  scale_fill_viridis_d(begin = 0, end = .85, direction = -1, option = 'viridis') +
+  scale_fill_viridis_d(begin = .33, end = .66, direction = -1, option = 'viridis') +
   #cambiar geom_text tal que: Stack y cambio colores
   geom_text(position = position_stack(vjust = .5),
             size= 2.75, color = rep.int(c('black', 'white', 'white'), 4)) + 
@@ -537,12 +532,7 @@ Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
 En el gráfico se puede ver la comparación etaria respecto a la confianza al presidente de la república, según año. Este gráfico es muy útil para la comparación y análisis dentro de ciertas categorías de agrupación (within).
 
 ```{r edad_ola}
-a1 <- data.frame(svytable(~conf_presi + ola + edad, elsoc_diseno, round = F))
-a2 <- a1 %>% group_by(edad, ola) %>% transmute(porcentaje=Freq/sum(Freq)) 
-a2$edad <- NULL
-a2$ola <- NULL
-
-datos.grafico<- cbind(a1,a2)
+datos.grafico <- data.frame((svytable(~conf_presi + ola + edad, elsoc_diseno, round = F))) %>% group_by(ola, edad) %>% mutate(porcentaje=Freq/sum(Freq))
 
 c.2.1 <-datos.grafico %>% 
     ggplot(aes(y = porcentaje, x = ola, fill = conf_presi, 
@@ -553,7 +543,7 @@ c.2.1 <-datos.grafico %>%
                        limits = c(0, 1)) +
     ylab(label = NULL) +
     xlab(label = NULL) +
-    scale_fill_viridis_d(begin = .33, end = .66, direction = -1, option = 'viridis') +
+    scale_fill_viridis_d(begin = 0, end = .85, direction = -1, option = 'viridis') +
     #Agrego facer_wrap para hacer un Gráfico para cada tramo etario
     facet_wrap(datos.grafico$edad)+
     theme(legend.position = 'top',
@@ -571,12 +561,8 @@ Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
 El gráfico anterior es complejo debido a la cantidad de información que contiene, por lo que se elabora una simplificación de lo anterior (revisar literatura relevante para la visualización de datos)
 
 ```{r}
-a1 <- data.frame(svytable(~conf_presi_rec + ola + edad, elsoc_diseno, round = F))
-a2 <- a1 %>% group_by(edad, ola) %>% transmute(porcentaje=Freq/sum(Freq)) 
-a2$edad <- NULL
-a2$ola <- NULL
+datos.grafico <- data.frame((svytable(~conf_presi_rec + ola + edad, elsoc_diseno, round = F))) %>% group_by(ola, edad) %>% mutate(porcentaje=Freq/sum(Freq))
 
-datos.grafico<- cbind(a1,a2)
 
 #Seleccionar una sóla respuesta, se realiza un subset de los datos a graficar
 datos.subset <- droplevels(subset(datos.grafico, datos.grafico$conf_presi_rec== 'Nada o Poco'))
@@ -633,20 +619,18 @@ elsoc_diseno <- svydesign(ids = ~segmento, strata = ~estrato, weights = ~pondera
 
 Luego se realiza las tablas de porcentajes y se trasponen por cada variable.
 ```{r tres_var_ola}
-a <- data.frame(svytable(~conf_presi_rec + ola, elsoc_diseno, round = F))
-a1 <- a %>% group_by(ola) %>% transmute(p_presi=Freq/sum(Freq))
-b <- data.frame(svytable(~conf_part_rec + ola, elsoc_diseno, round = F))
-b1 <- b %>% group_by(ola) %>% transmute(p_part=Freq/sum(Freq))
-c <- data.frame(svytable(~conf_carb_rec + ola, elsoc_diseno, round = F))
-c1 <- c %>% group_by(ola) %>% transmute(p_carb=Freq/sum(Freq))
-datos.grafico2<- cbind(a,a1,b,b1,c,c1)
+datos.presi <- data.frame((svytable(~conf_presi_rec + ola, elsoc_diseno, round = F))) %>% group_by(ola) %>% mutate(p_presi=Freq/sum(Freq))
+datos.presi$ola <- NULL
+datos.part <- data.frame((svytable(~conf_part_rec + ola, elsoc_diseno, round = F))) %>% group_by(ola) %>% mutate(p_part=Freq/sum(Freq))
+datos.part$ola <- NULL
+datos.carb <- data.frame((svytable(~conf_carb_rec + ola, elsoc_diseno, round = F))) %>% group_by(ola) %>% mutate(p_carb=Freq/sum(Freq))
+
+datos.grafico1<- cbind(datos.presi, datos.part, datos.carb)
 
 #trasponer según variable
-datos.grafico <- datos.grafico2 %>% 
+datos.grafico <- datos.grafico1 %>% 
         pivot_longer(cols = starts_with('conf_'))  %>%
-        mutate(variable = factor(name,
-                             labels = c('Presidente/a de la Republica', 'Partidos Políticos', 
-                             'Carabineros de Chile'))) %>% 
+        mutate(variable = factor(name, labels = c('Presidente/a de la Republica', 'Partidos Políticos','Carabineros de Chile'))) %>% 
                                         drop_na()
 
 datos.grafico$porcentaje <- with(datos.grafico, case_when(
@@ -660,7 +644,7 @@ c.2.3 <-datos.grafico %>%
     ggplot(aes(y = porcentaje, x = ola, fill = value, 
                label = as.character(scales::percent(porcentaje, accuracy = .1)))) +
   theme_bw() + 
-    geom_col(width = 0.5, position = "Stack") +
+    geom_col(width = 0.75, position = "Stack") +
     scale_y_continuous(labels = scales::percent,
                        limits = c(0, 1)) +
     ylab(label = NULL) +
@@ -690,8 +674,7 @@ El último gráfico muestra el cambio de la percepción del estatus social a lo 
 
 ```{r recodificar varibales}
 #Recolectar variables a utilizar
-datos.grafico3 <- data.frame(cbind(elsoc_long$idencuesta, elsoc_long$ola,elsoc_long$estatus, 
-                                   elsoc_long$ponderador02))
+datos.grafico3 <- data.frame(cbind(elsoc_long$idencuesta, elsoc_long$ola,elsoc_long$estatus,elsoc_long$ponderador02))
 colnames(datos.grafico3) <- c("idencuesta", "ola", "estatus", "ponderador02")
 
 #Pasar tabla de long a wide
@@ -744,7 +727,7 @@ c.2.4 <-ggplot(datos.grafico, aes(y=porcentaje, x=cambio_estatus,fill=respuesta 
                      limits = c(0, 1)) +
   ylab(label = NULL) +
   xlab(label = NULL) +
-  scale_fill_viridis_d(begin = 0, end = .85, direction = -1, option = 'viridis') +
+  scale_fill_viridis_d(begin = .33, end = .66, direction = -1, option = 'viridis') +
   theme(legend.position = 'top',
         legend.title = element_blank()) +
   geom_text(position = position_stack(vjust = .5),
@@ -771,22 +754,11 @@ En esta sección aprenderá a realizar gráficos "alluvial" para datos longitudi
 
 ```{r}
 #Paso 1
-a1 <- data.frame(svytable(~idcoal + ola + idencuesta, elsoc_diseno, round = F))
-a1 <- a1 %>% dplyr::filter(Freq>0)
-a2 <- a1 %>% group_by(ola) %>% transmute(porcentaje=Freq/sum(Freq)) 
-a2$ola <- NULL
-datos.d.1<- cbind(a1,a2)
-datos.d.1 <- na.omit(datos.d.1)
+datos.d1 <- data.frame((svytable(~idcoal + ola + idencuesta, elsoc_diseno, round = F))) %>% dplyr::filter(Freq>0)  %>% group_by(ola) %>% mutate(porcentaje=Freq/sum(Freq)) %>% na.omit()
 
 #Paso 2
-b1 <- data.frame(svytable(~idcoal + ola, elsoc_diseno, round = F))
-b2 <- b1 %>% 
-  group_by(ola) %>% 
-  transmute(porcentaje=Freq/sum(Freq)) %>% 
+etiquetas.d1 <- data.frame((svytable(~idcoal + ola, elsoc_diseno, round = F))) %>% group_by(ola) %>% mutate(porcentaje=Freq/sum(Freq)) %>% na.omit() %>% 
   mutate(idencuesta = 1)
-b2$ola <- NULL
-etiquetas.d.1<- cbind(b1,b2)
-etiquetas.d.1 <- na.omit(etiquetas.d.1)
 ```
 
 ```{r gráfíco alluvial .d.1: idcoal 4 olas}
@@ -820,25 +792,14 @@ Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
 #### d.2 Alluvial para dos olas: identificación con coalición política.
 ```{r}
 #Paso 1
-a1 <- data.frame(svytable(~idcoal + ola + idencuesta, elsoc_diseno, round = F))
-a1 <- a1 %>% dplyr::filter(Freq>0)
-a2 <- a1 %>% group_by(ola) %>% transmute(porcentaje=Freq/sum(Freq)) 
-a2$ola <- NULL
-datos.d.2<- cbind(a1,a2)
-datos.d.2 <- na.omit(datos.d.2)
+datos.d2 <- data.frame((svytable(~idcoal + ola + idencuesta, elsoc_diseno, round = F))) %>% dplyr::filter(Freq>0)  %>% group_by(ola) %>% mutate(porcentaje=Freq/sum(Freq)) %>% na.omit()
 
 #Paso 1.1: crear un subset sólo para los años 2017 y 2019
 subset.d.2 <- droplevels(subset(datos.d.2, datos.d.2$ola == '2017' | datos.d.2$ola == '2019'))
 
 #Paso 2
-b1 <- data.frame(svytable(~idcoal + ola, elsoc_diseno, round = F))
-b2 <- b1 %>% 
-  group_by(ola) %>% 
-  transmute(porcentaje=Freq/sum(Freq)) %>% 
+etiquetas.d2 <- data.frame((svytable(~idcoal + ola, elsoc_diseno, round = F))) %>% group_by(ola) %>% mutate(porcentaje=Freq/sum(Freq)) %>% na.omit() %>% 
   mutate(idencuesta = 1)
-b2$ola <- NULL
-etiquetas.d.2<- cbind(b1,b2)
-etiquetas.d.2 <- na.omit(etiquetas.d.2)
 
 #Paso 2.2: crear un subset sólo para los años 2017 y 2019
 etiquetas.d.2 <- droplevels(subset(etiquetas.d.2, etiquetas.d.2$ola == '2017' | etiquetas.d.2$ola == '2019'))
@@ -875,25 +836,14 @@ Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
 #### d.3 Alluvial para dos o más categorías: situación ocupacional
 ```{r}
 #Paso 1
-a1 <- data.frame(svytable(~idcoal + ola + idencuesta + socup + sexo, elsoc_diseno, round = F))
-a1 <- a1 %>% dplyr::filter(Freq>0)
-a2 <- a1 %>% group_by(ola) %>% transmute(porcentaje=Freq/sum(Freq)) 
-a2$ola <- NULL
-datos.d.3<- cbind(a1,a2)
-datos.d.3 <- na.omit(datos.d.3)
+datos.d3 <- data.frame((svytable(~idcoal + ola + idencuesta + socup + sexo, elsoc_diseno, round = F))) %>% dplyr::filter(Freq>0)  %>% group_by(ola) %>% mutate(porcentaje=Freq/sum(Freq)) %>% na.omit()
 
 #Paso 1.1: crear un subset sólo para los años 2017 y 2019
 subset.d.3 <- droplevels(subset(datos.d.3, datos.d.3$ola == '2017' | datos.d.3$ola == '2019'))
 
 #Paso 2
-b1 <- data.frame(svytable(~idcoal + ola + socup + sexo, elsoc_diseno, round = F))
-b2 <- b1 %>% 
-  group_by(ola) %>% 
-  transmute(porcentaje=Freq/sum(Freq)) %>% 
+etiquetas.d3 <- data.frame((svytable(~idcoal + ola + socup + sexo, elsoc_diseno, round = F))) %>% group_by(ola) %>% mutate(porcentaje=Freq/sum(Freq)) %>% na.omit() %>% 
   mutate(idencuesta = 1)
-b2$ola <- NULL
-etiquetas.d.3<- cbind(b1,b2)
-etiquetas.d.3 <- na.omit(etiquetas.d.3)
 
 #Paso 2.2: crear un subset sólo para los años 2017 y 2019
 etiquetas.d.3 <- droplevels(subset(etiquetas.d.3, etiquetas.d.3$ola == '2017' | etiquetas.d.3$ola == '2019'))
@@ -939,22 +889,20 @@ En esta sección aprenderá a realizar gráficos de lineas y puntos para datos l
 #### e.1 Lineas y puntos para una variable.
 ```{r}
 #Paso 1
-a1 <- data.frame(svytable(~conf_presi + ola, elsoc_diseno, round = F))
-a2 <- a1 %>% group_by(ola) %>% transmute(porcentaje=Freq/sum(Freq)) 
-a2$ola <- NULL
-datos.e.1<- cbind(a1,a2)
+datos.e1 <- data.frame((svytable(~conf_presi + ola, elsoc_diseno, round = F))) %>% group_by(ola) %>% mutate(p_carb=Freq/sum(Freq))
 ```
 
 ```{r grafico-lineas-e.1}
 e.1 <- ggplot(datos.e.1,aes(y = porcentaje, x = ola, color = conf_presi, group = conf_presi,
                label = as.character(scales::percent(porcentaje, accuracy = .1)))) +
+    theme_bw() +   
     geom_line(size = 1) +
     geom_point(size = 1.8) +
     scale_y_continuous(labels = scales::percent,
                        limits = c(0,1)) +
     ylab(label = NULL) +
     xlab(label = NULL) +
-    scale_color_viridis_d(begin = .3, end = .8, direction = 1, option = 'viridis') +
+    scale_color_viridis_d(begin = 0, end = .85, direction = 1, option = 'viridis') +
     geom_text_repel(posilinetion = position_dodge(width = .9),
     size= 2.25) + 
     theme(legend.position = 'top',
@@ -973,13 +921,13 @@ Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
 
 ```{r}
 #Paso 1: Mismo código que gráfico c.2.3
-a <- data.frame(svytable(~conf_presi_rec + ola, elsoc_diseno, round = F))
-a1 <- a %>% group_by(ola) %>% transmute(p_presi=Freq/sum(Freq))
-b <- data.frame(svytable(~conf_part_rec + ola, elsoc_diseno, round = F))
-b1 <- b %>% group_by(ola) %>% transmute(p_part=Freq/sum(Freq))
-c <- data.frame(svytable(~conf_carb_rec + ola, elsoc_diseno, round = F))
-c1 <- c %>% group_by(ola) %>% transmute(p_carb=Freq/sum(Freq))
-datos.grafico.e.2<- cbind(a,a1,b,b1,c,c1)
+datos.presi <- data.frame((svytable(~conf_presi_rec + ola, elsoc_diseno, round = F))) %>% group_by(ola) %>% mutate(p_presi=Freq/sum(Freq))
+datos.presi$ola <- NULL
+datos.part <- data.frame((svytable(~conf_part_rec + ola, elsoc_diseno, round = F))) %>% group_by(ola) %>% mutate(p_part=Freq/sum(Freq))
+datos.part$ola <- NULL
+datos.carb <- data.frame((svytable(~conf_carb_rec + ola, elsoc_diseno, round = F))) %>% group_by(ola) %>% mutate(p_carb=Freq/sum(Freq))
+
+datos.grafico.e.2<- cbind(datos.presi, datos.part, datos.carb)
 
 #trasponer según variable
 datos.grafico <- datos.grafico.e.2 %>% 
@@ -1001,13 +949,14 @@ subset.e.2 <- droplevels(subset(datos.grafico, value == 'Nada o Poco'))
 ```{r grafico-lineas-e.2}
 e.2 <- ggplot(subset.e.2, aes(y = porcentaje, x = ola, color = variable, group = variable,
                label = as.character(scales::percent(porcentaje, accuracy = .1)))) +
+    theme_bw() +   
     geom_line(size = 1) +
     geom_point(size = 1.8) +
     scale_y_continuous(labels = scales::percent,
                        limits = c(0,1)) +
     ylab(label = NULL) +
     xlab(label = NULL) +
-    scale_color_viridis_d(begin = .2, end = .7, direction = 1, option = 'viridis') +
+    scale_color_viridis_d(begin = .33, end = .66, direction = 1, option = 'viridis') +
     geom_text(vjust = -0.8,
     posilinetion = position_dodge(width = .9),
     size= 2.75) +
@@ -1029,13 +978,13 @@ Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
 #### e.3 Lineas y puntos para una variables y más de una agrupación
 ```{r}
 #Paso 1: Mismo código que gráfico c.2.3
-a <- data.frame(svytable(~conf_presi_rec + ola + zona, elsoc_diseno, round = F))
-a1 <- a %>% group_by(ola, zona) %>% transmute(p_presi=Freq/sum(Freq))
-b <- data.frame(svytable(~conf_part_rec + ola + zona, elsoc_diseno, round = F))
-b1 <- b %>% group_by(ola, zona) %>% transmute(p_part=Freq/sum(Freq))
-c <- data.frame(svytable(~conf_carb_rec + ola + zona, elsoc_diseno, round = F))
-c1 <- c %>% group_by(ola, zona) %>% transmute(p_carb=Freq/sum(Freq))
-datos.grafico.e.3<- cbind(a,a1,b,b1,c,c1)
+datos.presi <- data.frame((svytable(~conf_presi_rec + ola + zona, elsoc_diseno, round = F))) %>% group_by(ola, zona) %>% mutate(p_presi=Freq/sum(Freq))
+datos.presi$ola <- NULL
+datos.part <- data.frame((svytable(~conf_part_rec + ola + zona, elsoc_diseno, round = F))) %>% group_by(ola, zona) %>% mutate(p_part=Freq/sum(Freq))
+datos.part$ola <- NULL
+datos.carb <- data.frame((svytable(~conf_carb_rec + ola + zona, elsoc_diseno, round = F))) %>% group_by(ola, zona) %>% mutate(p_carb=Freq/sum(Freq))
+
+datos.grafico.e.3<- cbind(datos.presi, datos.part, datos.carb)
 
 #trasponer según variable
 datos.grafico <- datos.grafico.e.3 %>% 
@@ -1057,13 +1006,14 @@ subset.e.3 <- droplevels(subset(datos.grafico, value == 'Nada o Poco'))
 ```{r grafico-linea-e.3}
 e.3 <- ggplot(subset.e.3,aes(y = porcentaje, x = ola, color = variable, group = variable,
                label = as.character(scales::percent(porcentaje, accuracy = .1)))) +
+    theme_bw() +  
     geom_line(size = 1) +
     geom_point(size = 1.8) +
     scale_y_continuous(labels = scales::percent,
                        limits = c(0,1)) +
     ylab(label = NULL) +
     xlab(label = NULL) +
-    scale_color_viridis_d(begin = .2, end = .7, direction = 1, option = 'viridis') +
+    scale_color_viridis_d(begin = .33, end = .66, direction = 1, option = 'viridis') +
     facet_wrap(.~zona)+
     geom_text(vjust = -0.8,
     posilinetion = position_dodge(width = .9),
@@ -1082,8 +1032,16 @@ N<-(N/3)
 
 Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
 
+
+A lo largo de este documento se explicaron los pasos para lograr un grupo de visualizaciones para los datos del Estudio Longitudinal Social de Chile (ELSOC) mediante paquete `ggplot2`. En esta última sección se expusieron tres tipos de gráficos: de barra, alluvial y de líneas. Para análisis de datos más complejo, se recomienda revisar [literatura](#literatura) para hacer uso de modelos lineales debido a su utilidad al relacionar la diversidad de variables que existen en ELSOC.
+
+
 ## 3. Literatura Relevante {#literatura}
 
-Healy, K. (2018). *Data Visualization: A practical introduction*. Recuperado de: [https://socviz.co/?fbclid=IwAR2Y6epYvtWSrE9sLk5wVBJopYoh4YXKM2FkNdfMCYBuaH6hYntXM-Ep6Ec](https://socviz.co/?fbclid=IwAR2Y6epYvtWSrE9sLk5wVBJopYoh4YXKM2FkNdfMCYBuaH6hYntXM-Ep6Ec)
+Healy, K. (2019). *Data Visualization: A practical introduction*. Recuperado de: [https://socviz.co/?fbclid=IwAR2Y6epYvtWSrE9sLk5wVBJopYoh4YXKM2FkNdfMCYBuaH6hYntXM-Ep6Ec](https://socviz.co/?fbclid=IwAR2Y6epYvtWSrE9sLk5wVBJopYoh4YXKM2FkNdfMCYBuaH6hYntXM-Ep6Ec)
+
+Irizarry, R (2021). *Introduction to Data Science, Data Science and Prediction Algorithms with R*. Recuperado de: [https://rafalab.github.io/dsbook/](https://rafalab.github.io/dsbook/)
 
 Kabacoff, R. (2020). *Data Visualization with R*. Recuperado de: [https://rkabacoff.github.io/datavis/](https://rkabacoff.github.io/datavis/)
+
+
