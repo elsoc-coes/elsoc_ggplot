@@ -91,8 +91,8 @@ Finalmente, para trabajar con datos panel resulta fundamental filtrar las variab
 En específico, nos quedaremos sólo con aquellos encuestados que respondieron en las cuatro olas de ELSOC (`tipo_atricion`=1) y eliminaremos de la muestra los casos con inconsistencias mayores (`tipo_caso`=2).
  
 ```{r Seleccion de variables}
-
-elsoc_wide <- elsoc_wide_2016_2019 %>% dplyr::filter(tipo_atricion==1 & tipo_caso !=2) 
+sjmisc::frq(elsoc_wide_2016_2019$tipo_caso)
+elsoc_wide <- elsoc_wide_2016_2019 %>% dplyr::filter(tipo_atricion==1 & tipo_caso !=2 & tipo_caso !=1) 
               #filtrar atrición entre 2016-19 y casos c/inconsistencias mayores
 
 elsoc_wide <- elsoc_wide %>% dplyr::select(idencuesta, #identificador individual
@@ -177,14 +177,12 @@ elsoc_long$edad <- sjlabelled::set_label(elsoc_long$edad, label = c("Edad en Tra
 #Recode variable "m01" nivel educacional / rename "educacion"
 elsoc_long$educacion <- car::recode(elsoc_long$m01,"c(1,2,3)=1;c(4,5)=2;c(6,7)=3;c(8,9,10)=4")
 elsoc_long$educacion <- factor(elsoc_long$educacion,labels = c("Basica","Media","Tecnica","Universitaria"))
-elsoc_long$educacion <- na.replace(elsoc_long$educacion, "NS/NR") #recode NA en categoría "NS/NR" 
 elsoc_long$educacion <- sjlabelled::set_label(elsoc_long$educacion, label = c("Nivel Educacional"))     
                                               #etiquetamos variable
 
 #Recode variable "d01_01" estatus social subjetivo / raneme "estatus".
 elsoc_long$estatus<- factor(car::recode(elsoc_long$d01_01, "0:4=1;5=2;6:10=3"),
                           labels = c('Bajo','Medio','Alto'))
-elsoc_long$estatus <- na.replace(elsoc_long$estatus, "NS/NR") #recode NA en categoría "NS/NR" 
 elsoc_long$estatus <- sjlabelled::set_label(elsoc_long$estatus, label = c("Estatus Social Subjetivo")) 
                       #etiquetamos variable
 
@@ -196,6 +194,8 @@ elsoc_long$socup <- factor(car::recode(elsoc_long$m02,"c(1,2,3) = 1; 7 = 2; 6 = 
 elsoc_long$socup <- na.replace(elsoc_long$socup, "NS/NR") #recode NA en categoría "NS/NR"
 elsoc_long$socup <- sjlabelled::set_label(elsoc_long$socup, label = c("Situación Ocupacional")) 
                     #etiquetamos variable
+
+sjmisc::frq(elsoc_long$socup)
 
 #Recode variable "estrato" que refiere al tipo de ciudad / rename "tipo de ciudad"
 elsoc_long$tipo_ciudad <- factor(elsoc_long$estrato, labels = c('Gran Santiago', 'Gran Valparaíso', 'Gran 
@@ -219,7 +219,6 @@ elsoc_long$zona <- sjlabelled::set_label(elsoc_long$zona, label = c("Zona Geogr�
 elsoc_long$idpart <- factor(elsoc_long$c16,labels = 
                             c('PC','PH','RD','PRO','EVO','PPD','AMP','PDC','PRI','RN','UDI','PS','PRDS',
                               'Otro','Ninguno'))
-elsoc_long$idpart <- na.replace(elsoc_long$idpart, "NS/NR") #recode NA en categoría "NS/NR" 
 elsoc_long$idpart <- sjlabelled::set_label(elsoc_long$idpart, label = c("Indentificación con Partido Político")) 
                      #etiquetamos variable
 
@@ -236,28 +235,24 @@ elsoc_long$cambiar_consti <- factor(car::recode(elsoc_long$c28, "c(1,2)=1;c(3)=2
 elsoc_long$cambiar_consti <- factor(elsoc_long$cambiar_consti, 
                             labels = c('En desacuendo o totalmente en desacuerdo', 'Ni de acuerdo ni en 
                                        desacuerdo', 'De acuerdo o totalmente de acuerdo'))
-elsoc_long$cambiar_consti <- na.replace(elsoc_long$cambiar_consti, "NS/NR") #recode NA en categoría "NS/NR"
 elsoc_long$cambiar_consti <- sjlabelled::set_label(elsoc_long$cambiar_consti, label = 
                                                      c("Grado de Acuerdo con Cambiar Constitución"))       
                               #etiquetamos variable
 
 #Recode "c05_08" confianza en el presidente / rename "conf_presi".
 elsoc_long$conf_presi <- factor(elsoc_long$c05_08,labels = c('Nada', 'Poco', 'Algo', 'Bastante', 'Mucho'))
-elsoc_long$conf_presi <- na.replace(elsoc_long$conf_presi, "NS/NR") #recode NA en categoría "NS/NR"
 elsoc_long$conf_presi <- sjlabelled::set_label(elsoc_long$conf_presi, label = c("Confianza en el 
                                                                                 Presidente"))
                         #etiquetamos variable
 
 #Recode "c05_02" confianza en partidos políticos / rename "conf_part".
 elsoc_long$conf_part <- factor(elsoc_long$c05_02,labels = c('Nada', 'Poco', 'Algo', 'Bastante', 'Mucho'))
-elsoc_long$conf_part <- na.replace(elsoc_long$conf_part, "NS/NR") #recode NA en categoría "NS/NR"
 elsoc_long$conf_part <- sjlabelled::set_label(elsoc_long$conf_part, label = 
                                                 c("Confianza en Partidos Políticos")) 
                         #etiquetamos variable
 
 #Recode "c05_03" confianza en carabineros / rename "conf_carb".
 elsoc_long$conf_carb <- factor(elsoc_long$c05_03,labels = c('Nada', 'Poco', 'Algo', 'Bastante', 'Mucho'))
-elsoc_long$conf_carb <- na.replace(elsoc_long$conf_carb, "NS/NR") #recode NA en categoría "NS/NR"
 elsoc_long$conf_carb <- sjlabelled::set_label(elsoc_long$conf_carb, label = 
                                                 c("Confianza en Carabineros"))   
                         #etiquetamos variable
@@ -268,7 +263,6 @@ elsoc_long$conf_carb <- sjlabelled::set_label(elsoc_long$conf_carb, label =
 
 ```{r visualizar bbdd procesada}
 #Visualizar la bbdd procesada con las variables incorporadas
-
 #knitr::kable(elsoc_long, "pipe")
 ```
 
@@ -354,7 +348,8 @@ En esta sección aprenderá a realizar gráficos de barra simples para datos lon
 ```{r tabla_datos_gráfico, echo=TRUE}
 #Ejemplo: [VARIABLE = conf_presi] y [VAR_Z = ola]
 datos.grafico <- data.frame((svytable(~conf_presi + ola, elsoc_diseno, round = F))) %>%
-  group_by(ola) %>% mutate(porcentaje=Freq/sum(Freq))
+  group_by(ola) %>% mutate(porcentaje=Freq/sum(Freq)) %>%
+  na.omit()
 ```
 
 **Paso 3**: Revisar la tabla recién creada: columnas y datos
@@ -837,13 +832,13 @@ Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
 ```{r}
 
 #Paso 1
-datos.d.3 <- data.frame((svytable(~idcoal + ola + idencuesta + socup + sexo, elsoc_diseno, round = F))) %>% dplyr::filter(Freq>0)  %>% group_by(ola) %>% mutate(porcentaje=Freq/sum(Freq)) %>% na.omit()
+datos.d.3 <- data.frame((svytable(~idcoal + ola + idencuesta + socup + sexo, elsoc_diseno, round = F))) %>% dplyr::filter(Freq>0)  %>% group_by(ola,sexo) %>% mutate(porcentaje=Freq/sum(Freq)) %>% na.omit()
 
 #Paso 1.1: crear un subset sólo para los años 2017 y 2019
 subset.d.3 <- droplevels(subset(datos.d.3, datos.d.3$ola == '2017' | datos.d.3$ola == '2019'))
 
 #Paso 2
-etiquetas.d.3 <- data.frame((svytable(~idcoal + ola + socup + sexo, elsoc_diseno, round = F))) %>% group_by(ola) %>% mutate(porcentaje=Freq/sum(Freq)) %>% na.omit() %>% 
+etiquetas.d.3 <- data.frame((svytable(~idcoal + ola + socup + sexo, elsoc_diseno, round = F))) %>% group_by(ola,sexo) %>% mutate(porcentaje=Freq/sum(Freq)) %>% na.omit() %>% 
   mutate(idencuesta = 1)
 
 #Paso 2.2: crear un subset sólo para los años 2017 y 2019
@@ -863,7 +858,7 @@ d.3 <- ggplot(subset.d.3, aes(x = ola, fill = socup, stratum = socup,
     scale_fill_viridis_d(begin = 0, end = .9, direction = -1, option = 'viridis') +
     facet_wrap(.~sexo)+
     geom_text(data = etiquetas.d.3, 
-              aes(label = ifelse(porcentaje > 0.05 , scales::percent(porcentaje, accuracy = .1),"")),
+              aes(label = ifelse(porcentaje > 0.1 , scales::percent(porcentaje, accuracy = .1),"")),
               position = position_stack(vjust = .5),
               show.legend = FALSE,
               size = 2.75,
