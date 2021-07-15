@@ -40,7 +40,7 @@ En lo que sigue se especifican los pasos a seguir para obtener una base de datos
 
 #install.packages("pacman")
 library(pacman)
-pacman::p_load(car,dplyr,panelr,stringr,tidyverse,ggplot2,survey,ggrepel)
+pacman::p_load(car,dplyr,panelr,stringr,tidyverse,ggplot2,survey,ggrepel,na.tools)
 remove(list = ls()) #limpieza del entorno de trabajo
 options(scipen=999) #evita notación científica
 ```
@@ -78,7 +78,7 @@ Para el desarrollo del instructivo se trabajará con las siguientes variables de
 - `c17`: identificación con coalición política de la persona encuestada
 - `c28`: grado de acuerdo con la necesidad de cambiar la constitución actual de la persona encuestada
 - `c05`: nivel de confianza con el presidente de la república de la persona encuestada
-- `c05_02`: nivel de confianza con los partídos políticos de la persona encuestada
+- `c05_02`: nivel de confianza con los partidos políticos de la persona encuestada
 - `c05_03`: nivel de confianza con los carabineros de la persona encuestada
 
 Todas las cuales tienen agregado el sufijo "_w0[X]" que indica la ola de medición de la variable, y donde **[X]** corresponde al número de ola, pudiendo tomar los valores **1**, **2**, **3** y **4**, asociados a las olas 2016, 2017, 2018 y 2019 respectivamente. 
@@ -149,9 +149,6 @@ Finalmente, filtramos la base de datos long de casos perdidos.
 
 elsoc_long[elsoc_long==-999 | elsoc_long==-888] <- NA #recodificar No sabe y No responde en NA
 sum(is.na(elsoc_long)) #indica cantidad de NA
-elsoc_long <- na.omit(elsoc_long) #filtrar NA de la BBDD
-sum(is.na(elsoc_long)) #indica cantidad de NA
-
 ```
 
 ### e. Recodificación de variables
@@ -180,12 +177,14 @@ elsoc_long$edad <- sjlabelled::set_label(elsoc_long$edad, label = c("Edad en Tra
 #Recode variable "m01" nivel educacional / rename "educacion"
 elsoc_long$educacion <- car::recode(elsoc_long$m01,"c(1,2,3)=1;c(4,5)=2;c(6,7)=3;c(8,9,10)=4")
 elsoc_long$educacion <- factor(elsoc_long$educacion,labels = c("Basica","Media","Tecnica","Universitaria"))
+elsoc_long$educacion <- na.replace(elsoc_long$educacion, "NS/NR") #recode NA en categoría "NS/NR" 
 elsoc_long$educacion <- sjlabelled::set_label(elsoc_long$educacion, label = c("Nivel Educacional"))     
                                               #etiquetamos variable
 
 #Recode variable "d01_01" estatus social subjetivo / raneme "estatus".
 elsoc_long$estatus<- factor(car::recode(elsoc_long$d01_01, "0:4=1;5=2;6:10=3"),
                           labels = c('Bajo','Medio','Alto'))
+elsoc_long$estatus <- na.replace(elsoc_long$estatus, "NS/NR") #recode NA en categoría "NS/NR" 
 elsoc_long$estatus <- sjlabelled::set_label(elsoc_long$estatus, label = c("Estatus Social Subjetivo")) 
                       #etiquetamos variable
 
@@ -194,6 +193,7 @@ elsoc_long$socup <- factor(car::recode(elsoc_long$m02,"c(1,2,3) = 1; 7 = 2; 6 = 
                            labels = c("Trabajo remunerado", "Trabajo doméstico no remunerado", 
                                       "Desempleado/a", "Jubilado/a o pensionado/a", 
                                       "Otras categorías"))
+elsoc_long$socup <- na.replace(elsoc_long$socup, "NS/NR") #recode NA en categoría "NS/NR"
 elsoc_long$socup <- sjlabelled::set_label(elsoc_long$socup, label = c("Situación Ocupacional")) 
                     #etiquetamos variable
 
@@ -219,13 +219,14 @@ elsoc_long$zona <- sjlabelled::set_label(elsoc_long$zona, label = c("Zona Geogr�
 elsoc_long$idpart <- factor(elsoc_long$c16,labels = 
                             c('PC','PH','RD','PRO','EVO','PPD','AMP','PDC','PRI','RN','UDI','PS','PRDS',
                               'Otro','Ninguno'))
-elsoc_long$idpart <- sjlabelled::set_label(elsoc_long$idpart, label = 
-                                             c("Indentificación con Partido Político")) 
+elsoc_long$idpart <- na.replace(elsoc_long$idpart, "NS/NR") #recode NA en categoría "NS/NR" 
+elsoc_long$idpart <- sjlabelled::set_label(elsoc_long$idpart, label = c("Indentificación con Partido Político")) 
                      #etiquetamos variable
 
 #Recode "c17" indentifiación con colación política /rename "idcoal".
 elsoc_long$idcoal <- factor(elsoc_long$c17, labels = c('Chile Vamos','Nueva Mayoría','Frente Amplio', 
                                                        'Otra','Ninguna'))
+elsoc_long$idcoal <- na.replace(elsoc_long$idcoal, "NS/NR") #recode NA en categoría "NS/NR"
 elsoc_long$idcoal <- sjlabelled::set_label(elsoc_long$idcoal, label = 
                                              c("Indentificación con Coalición Política")) 
                     #etiquetamos variable
@@ -235,24 +236,28 @@ elsoc_long$cambiar_consti <- factor(car::recode(elsoc_long$c28, "c(1,2)=1;c(3)=2
 elsoc_long$cambiar_consti <- factor(elsoc_long$cambiar_consti, 
                             labels = c('En desacuendo o totalmente en desacuerdo', 'Ni de acuerdo ni en 
                                        desacuerdo', 'De acuerdo o totalmente de acuerdo'))
+elsoc_long$cambiar_consti <- na.replace(elsoc_long$cambiar_consti, "NS/NR") #recode NA en categoría "NS/NR"
 elsoc_long$cambiar_consti <- sjlabelled::set_label(elsoc_long$cambiar_consti, label = 
                                                      c("Grado de Acuerdo con Cambiar Constitución"))       
                               #etiquetamos variable
 
 #Recode "c05_08" confianza en el presidente / rename "conf_presi".
 elsoc_long$conf_presi <- factor(elsoc_long$c05_08,labels = c('Nada', 'Poco', 'Algo', 'Bastante', 'Mucho'))
+elsoc_long$conf_presi <- na.replace(elsoc_long$conf_presi, "NS/NR") #recode NA en categoría "NS/NR"
 elsoc_long$conf_presi <- sjlabelled::set_label(elsoc_long$conf_presi, label = c("Confianza en el 
                                                                                 Presidente"))
                         #etiquetamos variable
 
 #Recode "c05_02" confianza en partidos políticos / rename "conf_part".
 elsoc_long$conf_part <- factor(elsoc_long$c05_02,labels = c('Nada', 'Poco', 'Algo', 'Bastante', 'Mucho'))
+elsoc_long$conf_part <- na.replace(elsoc_long$conf_part, "NS/NR") #recode NA en categoría "NS/NR"
 elsoc_long$conf_part <- sjlabelled::set_label(elsoc_long$conf_part, label = 
                                                 c("Confianza en Partidos Políticos")) 
                         #etiquetamos variable
 
 #Recode "c05_03" confianza en carabineros / rename "conf_carb".
 elsoc_long$conf_carb <- factor(elsoc_long$c05_03,labels = c('Nada', 'Poco', 'Algo', 'Bastante', 'Mucho'))
+elsoc_long$conf_carb <- na.replace(elsoc_long$conf_carb, "NS/NR") #recode NA en categoría "NS/NR"
 elsoc_long$conf_carb <- sjlabelled::set_label(elsoc_long$conf_carb, label = 
                                                 c("Confianza en Carabineros"))   
                         #etiquetamos variable
@@ -766,7 +771,7 @@ d.1 <- ggplot(datos.d.1, aes(x = ola, fill = idcoal, stratum = idcoal,
     xlab(label = NULL) + 
     theme(legend.position = 'top',
           legend.title = element_blank()) +
-    scale_fill_viridis_d(begin = 0, end = .85, direction = -1, option = 'viridis') +
+    scale_fill_viridis_d(begin = 0, end = .95, direction = -1, option = 'viridis') +
     geom_text(data = etiquetas.d.1, 
               aes(label = ifelse(porcentaje > 0.03 , scales::percent(porcentaje, accuracy = .1),"")),
               position = position_stack(vjust = .5),
@@ -810,7 +815,7 @@ d.2 <- ggplot(subset.d.2, aes(x = ola, fill = idcoal, stratum = idcoal,
     xlab(label = NULL) + 
     theme(legend.position = 'top',
           legend.title = element_blank()) +
-    scale_fill_viridis_d(begin = 0, end = .85, direction = -1, option = 'viridis') +
+    scale_fill_viridis_d(begin = 0, end = .95, direction = -1, option = 'viridis') +
     geom_text(data = etiquetas.d.2, 
               aes(label = ifelse(porcentaje > 0.03 , scales::percent(porcentaje, accuracy = .1),"")),
               position = position_stack(vjust = .5),
@@ -830,6 +835,7 @@ Nota: Resultados Ponderados (con Diseño Muestral Complejo). N=  `r N`
 
 #### d.3 Alluvial para dos o más categorías: situación ocupacional
 ```{r}
+
 #Paso 1
 datos.d.3 <- data.frame((svytable(~idcoal + ola + idencuesta + socup + sexo, elsoc_diseno, round = F))) %>% dplyr::filter(Freq>0)  %>% group_by(ola) %>% mutate(porcentaje=Freq/sum(Freq)) %>% na.omit()
 
@@ -854,7 +860,7 @@ d.3 <- ggplot(subset.d.3, aes(x = ola, fill = socup, stratum = socup,
     xlab(label = NULL) +
     theme(legend.position = 'top',
           legend.title = element_blank()) +
-    scale_fill_viridis_d(begin = 0, end = .85, direction = -1, option = 'viridis') +
+    scale_fill_viridis_d(begin = 0, end = .9, direction = -1, option = 'viridis') +
     facet_wrap(.~sexo)+
     geom_text(data = etiquetas.d.3, 
               aes(label = ifelse(porcentaje > 0.05 , scales::percent(porcentaje, accuracy = .1),"")),
@@ -897,7 +903,7 @@ e.1 <- ggplot(datos.e.1,aes(y = porcentaje, x = ola, color = conf_presi, group =
                        limits = c(0,1)) +
     ylab(label = NULL) +
     xlab(label = NULL) +
-    scale_color_viridis_d(begin = 0, end = .85, direction = 1, option = 'viridis') +
+    scale_color_viridis_d(begin = 0, end = .95, direction = 1, option = 'viridis') +
     geom_text_repel(posilinetion = position_dodge(width = .9),
     size= 2.25) + 
     theme(legend.position = 'top',

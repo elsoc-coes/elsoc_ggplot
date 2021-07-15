@@ -13,8 +13,8 @@ En lo que sigue se especifican los pasos a seguir para obtener una base de datos
 library(car) #recodificación de datos entre otras funciones
 library(dplyr) #manipulación de datos entre otras funciones
 library(panelr) #manipulación de datos panel entre otras funciones
+library(na.tools)
 remove(list = ls()) #limpieza del entorno de trabajo
-
 options(scipen=999) #evita notación científica
 ```
 
@@ -96,14 +96,16 @@ elsoc_long <- long_panel(data = elsoc_wide, #base de datos formato wide
 
 Finalmente, filtramos la base de datos long de casos perdidos.
 ```{r Recode de casos perdidos en NA}
-elsoc_long[elsoc_long==-999 | elsoc_long==-888] <- NA #recodificar No sabe y No responde en NA
+#elsoc_long[elsoc_long==-999 | elsoc_long==-888] <- NA #recodificar No sabe y No responde en NA
 sum(is.na(elsoc_long)) #indica cantidad de NA
-
-elsoc_long <- na.omit(elsoc_long) #filtrar NA de la BBDD
+#na.replace(elsoc_long,"NS/NR")
+#elsoc_long <- na.omit(elsoc_long) #filtrar NA de la BBDD
+library(forcats)
+library(summarytools)
+view(dfSummary(elsoc_long))
 ```
 ## E. Recodificación de variables
 ```{r Recode de variables}
-
 #Recode VAR "ola" correspondiente a la ola de medición.
 elsoc_long$ola <- factor(elsoc_long$ola,labels = c('2016', '2017', '2018', '2019'))
 elsoc_long$ola <- sjlabelled::set_label(elsoc_long$ola, label = c("Ola de Medición")) #etiquetamos variable
@@ -169,7 +171,6 @@ elsoc_long$conf_part <- sjlabelled::set_label(elsoc_long$conf_part, label = c("C
 #Recode VAR "c05_03" confianza en carabineros / rename "conf_carb"
 elsoc_long$conf_carb <- factor(elsoc_long$c05_03,labels = c('Nada', 'Poco', 'Algo', 'Bastante', 'Mucho'))
 elsoc_long$conf_carb <- sjlabelled::set_label(elsoc_long$conf_carb, label = c("Confianza en Carabineros")) #etiquetamos variable
-
 
 View(elsoc_long) #visualizamos la bbdd procesada con las variables incorporadas.
 ```
