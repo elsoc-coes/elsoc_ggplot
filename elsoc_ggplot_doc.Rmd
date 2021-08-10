@@ -92,7 +92,7 @@ En específico, nos quedaremos sólo con aquellos encuestados que respondieron e
  
 ```{r Seleccion de variables}
 sjmisc::frq(elsoc_wide_2016_2019$tipo_caso)
-elsoc_wide <- elsoc_wide_2016_2019 %>% dplyr::filter(tipo_atricion==1 & tipo_caso !=2 & tipo_caso !=1) 
+elsoc_wide <- elsoc_wide_2016_2019 %>% dplyr::filter(tipo_atricion==1 & tipo_caso !=2) 
               #filtrar atrición entre 2016-19 y casos c/inconsistencias mayores
 
 elsoc_wide <- elsoc_wide %>% dplyr::select(idencuesta, #identificador individual
